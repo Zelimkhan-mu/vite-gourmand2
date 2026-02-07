@@ -1,0 +1,23 @@
+Table CommandeAnalytics {
+  _id ObjectId [primary key]
+  commande_source_id integer [note: 'ID de la commande SQL']
+  
+  // Dimension Temps (Pour filtrer par période)
+  annee integer
+  mois integer
+  jour integer
+  created_at datetime
+  
+  // Dimension Menu (Pour grouper par menu)
+  menu_id integer
+  menu_titre string
+  menu_theme string
+  menu_regime string
+  
+  // Métriques (Ce qu'on additionne/moyenne)
+  revenue decimal [note: 'CA généré']
+  nbre_personnes integer
+  
+  // Infos client (Optionnel, pour stats géo)
+  ville_client string
+}

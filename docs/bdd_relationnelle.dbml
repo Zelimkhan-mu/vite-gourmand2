@@ -1,0 +1,276 @@
+## Enums
+
+```dbml
+enum role {
+  utilisateur
+  employe
+  admin
+}
+
+enum type_plat {
+  entree
+  plat
+  dessert
+}
+
+enum statut_commande {
+  en_attente
+  acceptee
+  annulee
+  en_preparation
+  en_livraison
+  livree
+  attente_materiel
+  completee
+}
+
+enum statut_avis {
+  en_attente
+  approve
+  rejete
+}
+
+enum jours {
+  lundi
+  mardi
+  mercredi
+  jeudi
+  vendredi
+  samedi
+  dimanche
+}
+```
+
+## Tables Détaillées (Format DBML)
+
+### 1. users
+
+```dbml
+Table users {
+  id integer [pk, increment, not null]
+  role role [not null]
+  email varchar(255) [unique, not null]
+  password_hash varchar(255) [not null]
+  first_name varchar(100) [not null]
+  last_name varchar(100) [not null]
+  phone varchar(10) [not null]
+  adresse text 
+  is_active boolean [default: true]
+  created_at timestamp
+}
+```
+
+### 2. password_resets
+
+```dbml
+Table password_resets {
+  id integer [pk, increment, not null]
+  user_id int [ref: > users.id, not null]
+  token varchar(255) [unique, not null]
+  expire_a timestamp [not null]
+  utilise boolean [default: false]
+  created_at timestamp 
+}
+```
+
+### 3. themes
+
+```dbml
+Table themes {
+  id int [pk, increment, not null]
+  nom varchar(100) [not null]
+}
+```
+
+### 4. regimes
+
+```dbml
+Table regimes {
+  id int [pk, increment, not null]
+  nom varchar(100) [unique, not null]
+}
+```
+
+### 5. menus
+
+```dbml
+Table menus {
+  id int [pk, increment, not null]
+  titre varchar(255) [not null]
+  description text [not null]
+  theme_id int [ref: > themes.id, not null]
+  regime_id int [ref: > regimes.id]
+  min_persons int [not null]
+  base_price decimal [not null]
+  stock int [default: 0, not null]
+  couverture_id int [ref: > plat_images.id, not null]
+  created_at timestamp
+  updated_at timestamp  
+}
+```
+
+### 6. menu_conditions
+
+```dbml
+Table menu_conditions {
+  id int [pk, increment, not null]
+  menu_id int [ref: > menus.id, not null]
+  titre varchar(255)
+  condition text [not null]
+}
+```
+
+### 7. plats
+
+```dbml
+Table plats {
+  id int [pk, increment, not null]
+  nom varchar(255) [not null]
+  description text [not null]
+  type type_plat [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+```
+
+### 8. plat_images
+
+```dbml
+Table plat_images {
+  id int [pk, increment, not null]
+  plat_id int [ref: > plats.id, not null]
+  image_path varchar [not null]
+  alt_text varchar(255)
+  display_order int [default: 0]
+  created_at timestamp
+}
+```
+
+> **Note** : L'image de couverture d'un menu est sélectionnée parmi les images des plats qui le composent.
+
+
+### 9. allergenes
+
+```dbml
+Table allergenes {
+  id int [pk, increment, not null]
+  nom varchar(100) [unique, not null]
+}
+```
+
+### 10. plats_allergenes (Many-to-Many)
+
+```dbml
+Table plats_allergenes {
+  plat_id int [ref: > plats.id, not null]
+  allergene_id int [ref: > allergenes.id, not null]
+  
+  indexes {
+    (plat_id, allergene_id) [pk]
+  }
+}
+```
+
+### 11. plats_menus (Many-to-Many)
+
+```dbml
+Table plats_menus {
+  plat_id int [ref: > plats.id, not null]
+  menu_id int [ref: > menus.id, not null]
+  
+  indexes {
+    (plat_id, menu_id) [pk]
+  }
+}
+```
+
+### 12. commandes
+
+```dbml
+Table commandes {
+  id int [pk, increment, not null]
+  user_id int [ref: > users.id, not null]
+  menu_id int [ref: > menus.id, not null]
+  num_persons int
+  adresse_livraison text [not null]
+  ville_livraison varchar(255) [not null]
+  code_postal_livraison varchar(10) [not null]
+  date_livraison date [not null]
+  heure_livraison time [not null]
+  distance_livraison_km decimal
+  prix_menu decimal [not null]
+  frais_livraison decimal [not null]
+  discount decimal
+  prix_total decimal [not null]
+  statut_commande statut_commande [not null]
+  pret_materiel boolean [default: false]
+  motif_annulation text
+  moyen_contact_annulation varchar(100)
+  created_at timestamp
+  updated_at timestamp
+}
+```
+
+### 13. statut_commande_historique
+
+```dbml
+Table statut_commande_historique {
+  id int [pk, increment, not null]
+  commande_id int [ref: > commandes.id, not null]
+  statut statut_commande [not null]
+  changed_by int [ref: > users.id, not null]
+  created_at timestamp
+}
+```
+
+### 14. reviews
+
+```dbml
+Table reviews {
+  id int [pk, increment, not null]
+  commande_id int [ref: > commandes.id, not null]
+  user_id int [ref: > users.id, not null]
+  rating int [not null]
+  commentaire text [not null]
+  statut statut_avis [not null, default: 'en_attente']
+  created_at timestamp
+}
+```
+
+> **Note** : Maximum 1 avis par commande (contrainte UNIQUE sur commande_id).
+
+### 15. horaires
+
+```dbml
+Table horaires {
+  id int [pk, increment, not null]
+  jour jours [not null, unique]
+  ouverture_heure int
+  ouverture_minutes int
+  fermeture_heure int
+  fermeture_minutes int
+  is_closed boolean [default: false]
+  created_at timestamp
+  updated_at timestamp
+}
+```
+
+---
+
+## Résumé des Relations
+
+| Relation | Type | Description |
+|----------|------|-------------|
+| users → commandes | One-to-Many | Un utilisateur peut passer plusieurs commandes |
+| users → reviews | One-to-Many | Un utilisateur peut écrire plusieurs avis |
+| users → password_resets | One-to-Many | Un utilisateur peut demander plusieurs réinitialisations |
+| menus → commandes | One-to-Many | Un menu peut être dans plusieurs commandes |
+| menus ↔ plats | Many-to-Many | Un menu contient plusieurs plats, un plat peut être dans plusieurs menus |
+| plats ↔ allergenes | Many-to-Many | Un plat peut avoir plusieurs allergènes |
+| plats → plat_images | One-to-Many | Un plat peut avoir plusieurs images |
+| menus → plat_images | Many-to-One | Un menu a une image de couverture |
+| menus → menu_conditions | One-to-Many | Un menu peut avoir plusieurs conditions |
+| menus → themes | Many-to-One | Plusieurs menus peuvent avoir le même thème |
+| menus → regimes | Many-to-One | Plusieurs menus peuvent avoir le même régime |
+| commandes → statut_commande_historique | One-to-Many | Une commande a plusieurs entrées d'historique |
+| commandes → reviews | One-to-One | Une commande peut avoir au maximum un avis |
