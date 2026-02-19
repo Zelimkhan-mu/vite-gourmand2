@@ -1,0 +1,83 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('styles/dashboard.css') }}">
+{% endblock %}
+
+{% block body_attributes %}class="dashboard"{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block body %}
+    <div class="dashboard__mobile-header">
+        <button class="dashboard__burger" aria-label="Menu">
+            <span class="material-icons-outlined">menu</span>
+        </button>
+        <a href="{{ path('app_home') }}" class="header__logo">
+            <img src="{{ asset('images/logo.svg') }}" alt="VG" class="sidebar__logo-icon">
+            <span class="sidebar__logo-text">V&G</span>
+        </a>
+        <div class="dashboard__avatar-placeholder"></div>
+    </div>
+
+    <aside class="sidebar">
+        <div class="sidebar__logo">
+            <img src="{{ asset('images/logo.svg') }}" alt="VG" class="sidebar__logo-icon">
+            <span class="sidebar__logo-text">Vite & Gourmand</span>
+        </div>
+
+        <nav class="sidebar__nav">
+            {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_EMPLOYE') %}
+                <a href="#" class="sidebar__link">
+                    <span class="material-icons-outlined">shopping_cart</span> Commandes
+                </a>
+                <a href="#" class="sidebar__link">
+                    <span class="material-icons-outlined">restaurant_menu</span> Menus
+                </a>
+                <a href="#" class="sidebar__link">
+                    <span class="material-icons-outlined">dinner_dining</span> Plats
+                </a>
+                <a href="#" class="sidebar__link">
+                    <span class="material-icons-outlined">reviews</span> Avis
+                </a>
+                <a href="#" class="sidebar__link">
+                    <span class="material-icons-outlined">schedule</span> Horaires
+                </a>
+            {% else %}
+                <a href="#" class="sidebar__link">
+                    <span class="material-icons-outlined">dashboard</span> Tableau de bord
+                </a>
+                <a href="#" class="sidebar__link">
+                    <span class="material-icons-outlined">shopping_bag</span> Mes commandes
+                </a>
+                <a href="#" class="sidebar__link">
+                    <span class="material-icons-outlined">person</span> Mon profil
+                </a>
+                <a href="#" class="sidebar__link">
+                    <span class="material-icons-outlined">reviews</span> Mes avis
+                </a>
+            {% endif %}
+
+            {% if is_granted('ROLE_ADMIN') %}
+                <p class="sidebar__section-title">Administration</p>
+                <a href="#" class="sidebar__link">
+                    <span class="material-icons-outlined">group</span> Employés
+                </a>
+                <a href="#" class="sidebar__link">
+                    <span class="material-icons-outlined">bar_chart</span> Statistiques
+                </a>
+            {% endif %}
+        </nav>
+
+        <div class="sidebar__logout">
+            <a href="{{ path('app_logout') }}">
+                <span class="material-icons-outlined">logout</span> Déconnexion
+            </a>
+        </div>
+    </aside>
+
+    <main class="dashboard__content">
+        {% block dashboard_content %}{% endblock %}
+    </main>
+{% endblock %}

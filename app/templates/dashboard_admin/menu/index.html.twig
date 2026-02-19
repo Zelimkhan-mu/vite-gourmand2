@@ -1,0 +1,445 @@
+{% extends 'dashboard_admin/base.html.twig' %}
+
+{% block title %}Gestion des Menus{% endblock %}
+
+{% block admin_content %}
+<div x-data="menuManager()" x-cloak>
+
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="font-display font-bold text-2xl text-text-main-light">Gestion des Menus</h1>
+            <p class="text-sm text-gray-500 mt-1">{{ menus|length }} menu{{ menus|length > 1 ? 's' : '' }} au catalogue</p>
+        </div>
+        <button @click="openModal({ mode: 'create' })"
+                class="hidden md:flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm">
+            <span class="material-icons-outlined text-lg">add</span>
+            Ajouter un menu
+        </button>
+    </div>
+
+    <button @click="openModal({ mode: 'create' })"
+            class="md:hidden w-full flex items-center justify-center gap-2 bg-primary text-white px-5 py-3 rounded-xl font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm mb-6">
+        <span class="material-icons-outlined">add</span>
+        Ajouter un menu
+    </button>
+
+    <div class="space-y-4">
+        {% if menus is empty %}
+            <div class="text-center py-12 text-gray-500">
+                <span class="material-icons-outlined text-4xl mb-2 block">restaurant_menu</span>
+                <p>Aucun menu trouvé.</p>
+            </div>
+        {% else %}
+            {% for menu in menus %}
+                <div class="bg-white rounded-2xl shadow-soft p-4 md:p-5 border border-gray-100 hover:border-primary/20 transition-all duration-300">
+                    <div class="flex gap-4 md:gap-6">
+
+                        <div class="w-20 h-20 md:w-24 md:h-24 shrink-0 bg-[#F0EFED] rounded-xl overflow-hidden border border-gray-100">
+                            {% import 'partials/_macros.html.twig' as macros %}
+                            {% set couverturePath = macros.get_menu_cover_path(menu)|trim %}
+
+                            {% if couverturePath %}
+                                <img src="{{ asset('images/' ~ couverturePath) }}"
+                                     alt="{{ menu.titre }}"
+                                     class="w-full h-full object-cover"/>
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-gray-300">
+                                    <span class="material-icons-outlined text-2xl">restaurant_menu</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex-1 min-w-0 flex flex-col md:flex-row md:items-center md:gap-6">
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-display font-bold text-lg text-text-main-light leading-tight">{{ menu.titre }}</h3>
+                                <div class="flex flex-wrap items-center gap-2 mt-1">
+                                    <span class="text-sm text-gray-500">{{ menu.theme.nom }}</span>
+                                    {% if menu.regime %}
+                                        <span class="text-gray-300">·</span>
+                                        <span class="text-sm text-gray-500">{{ menu.regime.nom }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="flex flex-wrap items-center gap-3 mt-2">
+                                    <span class="text-sm font-bold text-primary font-display">{{ menu.basePrice|number_format(2, ',', ' ') }} €</span>
+                                    <span class="text-xs text-gray-400">·</span>
+                                    <span class="text-xs text-gray-500">min. {{ menu.minPersons }} pers.</span>
+                                    <span class="text-xs text-gray-400">·</span>
+                                    <span class="text-xs {{ menu.stock <= 5 ? 'text-red-500 font-semibold' : (menu.stock <= 15 ? 'text-orange-500 font-semibold' : 'text-green-600 font-semibold') }}">
+                                        {{ menu.stock }} restant{{ menu.stock > 1 ? 's' : '' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="hidden md:flex items-center gap-2 shrink-0">
+                                <button
+                                    {% set monEntree = menu.plats|filter(p => p.type == 'entree')|first %}
+                                    {% set monPlat = menu.plats|filter(p => p.type == 'plat')|first %}
+                                    {% set monDessert = menu.plats|filter(p => p.type == 'dessert')|first %}
+                                    @click="openModal({
+                                        mode: 'edit',
+                                        menu: {
+                                            id: {{ menu.id }},
+                                            titre: {{ menu.titre|json_encode }},
+                                            description: {{ menu.description|json_encode }},
+                                            themeId: '{{ menu.theme.id }}',
+                                            regimeId: '{{ menu.regime ? menu.regime.id : '' }}',
+                                            minPersons: {{ menu.minPersons }},
+                                            basePrice: {{ menu.basePrice }},
+                                            stock: {{ menu.stock }},
+                                            platEntreeId: '{{ monEntree ? monEntree.id : '' }}',
+                                            platPlatId: '{{ monPlat ? monPlat.id : '' }}',
+                                            platDessertId: '{{ monDessert ? monDessert.id : '' }}',
+                                            conditions: {{ menu.conditions|map(c => c.contenu)|json_encode }}
+                                        }
+                                    })"
+                                    class="p-2 text-primary hover:bg-primary/5 rounded-full transition-colors"
+                                    title="Modifier">
+                                    <span class="material-icons-outlined">edit</span>
+                                </button>
+                                <button
+                                    @click="confirmDelete({{ menu.id }}, '{{ menu.titre|e('js') }}')"
+                                    class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                    title="Supprimer">
+                                    <span class="material-icons-outlined">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex justify-end gap-2 pt-3 border-t border-gray-50 md:hidden">
+                        <button
+                            {% set monEntree = menu.plats|filter(p => p.type == 'entree')|first %}
+                            {% set monPlat = menu.plats|filter(p => p.type == 'plat')|first %}
+                            {% set monDessert = menu.plats|filter(p => p.type == 'dessert')|first %}
+                            @click="openModal({
+                                mode: 'edit',
+                                menu: {
+                                    id: {{ menu.id }},
+                                    titre: {{ menu.titre|json_encode }},
+                                    description: {{ menu.description|json_encode }},
+                                    themeId: '{{ menu.theme.id }}',
+                                    regimeId: '{{ menu.regime ? menu.regime.id : '' }}',
+                                    minPersons: {{ menu.minPersons }},
+                                    basePrice: {{ menu.basePrice }},
+                                    stock: {{ menu.stock }},
+                                    platEntreeId: '{{ monEntree ? monEntree.id : '' }}',
+                                    platPlatId: '{{ monPlat ? monPlat.id : '' }}',
+                                    platDessertId: '{{ monDessert ? monDessert.id : '' }}',
+                                    conditions: {{ menu.conditions|map(c => c.contenu)|json_encode }}
+                                }
+                            })"
+                            class="p-2 text-primary hover:bg-primary/5 rounded-full transition-colors"
+                            title="Modifier">
+                            <span class="material-icons-outlined">edit</span>
+                        </button>
+                        <button
+                            @click="confirmDelete({{ menu.id }}, '{{ menu.titre|e('js') }}')"
+                            class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                            title="Supprimer">
+                            <span class="material-icons-outlined">delete</span>
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+            <div class="py-2 text-center">
+                <span class="text-xs text-gray-400">
+                    <span class="font-semibold text-gray-600">{{ menus|length }}</span>
+                    menu{{ menus|length > 1 ? 's' : '' }} affiché{{ menus|length > 1 ? 's' : '' }}
+                </span>
+            </div>
+        {% endif %}
+    </div>
+
+    <div x-show="modalOpen" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+         @keydown.escape.window="modalOpen = false">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+             @click.outside="modalOpen = false">
+
+            <div class="px-8 py-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0 bg-white sticky top-0 z-10">
+                <h2 class="font-display font-bold text-2xl text-text-main-light"
+                    x-text="modalMode === 'create' ? 'Ajouter un nouveau menu' : 'Modifier le menu'"></h2>
+                <button @click="modalOpen = false" class="text-gray-400 hover:text-primary transition-colors">
+                    <span class="material-icons-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="p-8 overflow-y-auto space-y-6">
+
+                <div>
+                    <label class="block text-sm font-semibold text-text-main-light mb-2">Titre du menu</label>
+                    <input type="text" x-model="form.titre"
+                           class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light placeholder-gray-400"
+                           placeholder="Ex: Menu Prestige..."/>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-text-main-light mb-2">Description</label>
+                    <textarea x-model="form.description" rows="3"
+                              class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light placeholder-gray-400 resize-none"
+                              placeholder="Courte description attractive du menu..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-text-main-light mb-2">Thème</label>
+                        <select x-model="form.themeId"
+                                class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light">
+                            <option value="" disabled>Sélectionner un thème</option>
+                            {% for theme in themes %}
+                                <option value="{{ theme.id }}">{{ theme.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-text-main-light mb-2">Régime alimentaire</label>
+                        <select x-model="form.regimeId"
+                                class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light">
+                            <option value="">Aucun régime spécifique</option>
+                            {% for regime in regimes %}
+                                <option value="{{ regime.id }}">{{ regime.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-text-main-light mb-2">Prix (€)</label>
+                        <input type="number" step="0.01" min="0" x-model="form.basePrice"
+                               class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light"
+                               placeholder="Ex: 28.00"/>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-text-main-light mb-2">Stock</label>
+                        <input type="number" min="0" x-model="form.stock"
+                               class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light"
+                               placeholder="Ex: 50"/>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-text-main-light mb-2">Personnes min.</label>
+                        <input type="number" min="1" x-model="form.minPersons"
+                               class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light"
+                               placeholder="Ex: 10"/>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-text-main-light mb-3">Sélection des plats</label>
+                    <div class="border border-gray-200 rounded-xl p-4 bg-gray-50/50 space-y-4">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Entrée</label>
+                            <select x-model="form.platEntreeId"
+                                    class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light text-sm">
+                                <option value="" disabled>Sélectionner une entrée</option>
+                                {% for plat in platsEntrees %}
+                                    <option value="{{ plat.id }}">{{ plat.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Plat principal</label>
+                            <select x-model="form.platPlatId"
+                                    class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light text-sm">
+                                <option value="" disabled>Sélectionner un plat</option>
+                                {% for plat in platsPlats %}
+                                    <option value="{{ plat.id }}">{{ plat.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Dessert</label>
+                            <select x-model="form.platDessertId"
+                                    class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light text-sm">
+                                <option value="" disabled>Sélectionner un dessert</option>
+                                {% for plat in platsDesserts %}
+                                    <option value="{{ plat.id }}">{{ plat.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="block text-sm font-semibold text-text-main-light">Conditions de prestation</label>
+                        <button type="button" @click="addCondition()"
+                                class="flex items-center gap-1 px-3 py-1 text-xs font-semibold bg-white border border-gray-200 text-gray-600 rounded-full hover:bg-gray-50 transition-colors">
+                            <span class="material-icons-outlined text-sm">add</span>
+                            Ajouter
+                        </button>
+                    </div>
+                    <div class="space-y-2">
+                        <template x-for="(cond, idx) in form.conditions" :key="idx">
+                            <div class="flex items-center gap-2">
+                                <input type="text" x-model="form.conditions[idx]"
+                                       class="flex-1 rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light text-sm py-2"
+                                       placeholder="Ex: Livraison offerte dans un rayon de 15km"/>
+                                <button type="button" @click="removeCondition(idx)"
+                                        class="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                                    <span class="material-icons-outlined text-lg">close</span>
+                                </button>
+                            </div>
+                        </template>
+                        <p x-show="form.conditions.length === 0" class="text-xs text-gray-400 italic">Aucune condition ajoutée.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-8 py-5 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3 flex-shrink-0">
+                <button @click="modalOpen = false"
+                        class="bg-white text-gray-600 px-6 py-2.5 rounded-full font-semibold text-sm border border-gray-200 hover:bg-gray-50 transition-colors">
+                    Annuler
+                </button>
+                <button @click="submitForm()"
+                        class="bg-primary text-white px-6 py-2.5 rounded-full font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm">
+                    Enregistrer le menu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="deleteModalOpen" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8 text-center">
+            <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-icons-outlined text-red-500 text-2xl">delete_forever</span>
+            </div>
+            <h3 class="font-display font-bold text-xl text-text-main-light mb-2">Supprimer ce menu ?</h3>
+            <p class="text-sm text-gray-500 mb-6">
+                Vous allez supprimer <strong x-text="deleteMenuNom"></strong>. Cette action est irréversible.
+            </p>
+            <div class="flex gap-3 justify-center">
+                <button @click="deleteModalOpen = false"
+                        class="px-6 py-2.5 rounded-full border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors">
+                    Annuler
+                </button>
+                <form :action="'/admin/menus/' + deleteMenuId + '/supprimer'" method="post">
+                    <input type="hidden" name="_token" :value="deleteToken">
+                    <button type="submit"
+                            class="px-6 py-2.5 rounded-full bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-colors">
+                        Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <form id="menuForm" method="post" class="hidden">
+        <input type="hidden" name="_token" id="menuFormToken">
+        <input type="hidden" name="titre" id="menuFormTitre">
+        <input type="hidden" name="description" id="menuFormDescription">
+        <input type="hidden" name="themeId" id="menuFormThemeId">
+        <input type="hidden" name="regimeId" id="menuFormRegimeId">
+        <input type="hidden" name="minPersons" id="menuFormMinPersons">
+        <input type="hidden" name="basePrice" id="menuFormBasePrice">
+        <input type="hidden" name="stock" id="menuFormStock">
+        <input type="hidden" name="platEntreeId" id="menuFormPlatEntreeId">
+        <input type="hidden" name="platPlatId" id="menuFormPlatPlatId">
+        <input type="hidden" name="platDessertId" id="menuFormPlatDessertId">
+        <div id="menuFormConditions"></div>
+    </form>
+</div>
+
+<script>
+function menuManager() {
+    return {
+        modalOpen: false,
+        modalMode: 'create',
+        editMenuId: null,
+        deleteModalOpen: false,
+        deleteMenuId: null,
+        deleteMenuNom: '',
+        deleteToken: '',
+        form: {
+            titre: '',
+            description: '',
+            themeId: '',
+            regimeId: '',
+            minPersons: 1,
+            basePrice: '',
+            stock: 0,
+            platEntreeId: '',
+            platPlatId: '',
+            platDessertId: '',
+            conditions: [],
+        },
+
+        openModal(detail) {
+            this.modalMode = detail.mode;
+            if (detail.mode === 'create') {
+                this.editMenuId = null;
+                this.form = {
+                    titre: '', description: '', themeId: '', regimeId: '',
+                    minPersons: 1, basePrice: '', stock: 0,
+                    platEntreeId: '', platPlatId: '', platDessertId: '',
+                    conditions: [],
+                };
+            } else {
+                this.editMenuId = detail.menu.id;
+                this.form = {
+                    titre: detail.menu.titre,
+                    description: detail.menu.description,
+                    themeId: String(detail.menu.themeId),
+                    regimeId: String(detail.menu.regimeId),
+                    minPersons: detail.menu.minPersons,
+                    basePrice: detail.menu.basePrice,
+                    stock: detail.menu.stock,
+                    platEntreeId: String(detail.menu.platEntreeId),
+                    platPlatId: String(detail.menu.platPlatId),
+                    platDessertId: String(detail.menu.platDessertId),
+                    conditions: detail.menu.conditions ? [...detail.menu.conditions] : [],
+                };
+            }
+            this.modalOpen = true;
+        },
+
+        confirmDelete(id, nom) {
+            this.deleteMenuId = id;
+            this.deleteMenuNom = nom;
+            this.deleteToken = '{{ csrf_token('menu_delete_' ~ '__ID__') }}'.replace('__ID__', id);
+            this.deleteModalOpen = true;
+        },
+
+        addCondition() {
+            this.form.conditions.push('');
+        },
+
+        removeCondition(idx) {
+            this.form.conditions.splice(idx, 1);
+        },
+
+        submitForm() {
+            const form = document.getElementById('menuForm');
+            form.action = this.modalMode === 'create'
+                ? '{{ path('admin_menus_create') }}'
+                : '/admin/menus/' + this.editMenuId + '/modifier';
+
+            document.getElementById('menuFormToken').value = '{{ csrf_token('menu_form') }}';
+            document.getElementById('menuFormTitre').value = this.form.titre;
+            document.getElementById('menuFormDescription').value = this.form.description;
+            document.getElementById('menuFormThemeId').value = this.form.themeId;
+            document.getElementById('menuFormRegimeId').value = this.form.regimeId;
+            document.getElementById('menuFormMinPersons').value = this.form.minPersons;
+            document.getElementById('menuFormBasePrice').value = this.form.basePrice;
+            document.getElementById('menuFormStock').value = this.form.stock;
+            document.getElementById('menuFormPlatEntreeId').value = this.form.platEntreeId;
+            document.getElementById('menuFormPlatPlatId').value = this.form.platPlatId;
+            document.getElementById('menuFormPlatDessertId').value = this.form.platDessertId;
+
+            const condContainer = document.getElementById('menuFormConditions');
+            condContainer.innerHTML = '';
+            this.form.conditions.forEach((c) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'conditions[]';
+                input.value = c;
+                condContainer.appendChild(input);
+            });
+
+            form.submit();
+        },
+    };
+}
+</script>
+{% endblock %}

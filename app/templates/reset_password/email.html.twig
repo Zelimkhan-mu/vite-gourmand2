@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Réinitialisation de mot de passe</title>
+</head>
+<body style="font-family: 'Open Sans', Arial, sans-serif; background-color: #F0EFED; margin: 0; padding: 20px;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+            <td align="center">
+                <div style="background-color: #ffffff; max-width: 600px; padding: 40px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center;">
+                    <!-- Logo -->
+                    <div style="margin-bottom: 30px;">
+                        <span style="background-color: #800020; color: white; padding: 10px 15px; font-family: 'Playfair Display', serif; font-weight: bold; font-size: 24px; border-radius: 4px;">VG</span>
+                    </div>
+
+                    <h1 style="color: #2C3E50; font-family: 'Playfair Display', serif; margin-bottom: 20px;">Réinitialisation de mot de passe</h1>
+
+                    <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+                        Bonjour,<br><br>
+                        Vous avez demandé à réinitialiser votre mot de passe sur <strong>Vite & Gourmand</strong>.
+                        Cliquez sur le lien ci-dessous pour en définir un nouveau :
+                    </p>
+
+                    <a href="{{ url('app_reset_password', {token: resetToken.token}) }}" style="background-color: #800020; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 50px; font-weight: bold; display: inline-block; margin-bottom: 30px;">
+                        Réinitialiser mon mot de passe
+                    </a>
+
+                    <p style="color: #a0aec0; font-size: 12px; margin-top: 20px;">
+                        Ce lien expirera dans {{ resetToken.expirationMessageKey|trans(resetToken.expirationMessageData, 'ResetPasswordBundle') }}.
+                        <br>
+                        Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.
+                    </p>
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

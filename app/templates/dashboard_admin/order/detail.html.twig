@@ -1,0 +1,315 @@
+{% extends 'dashboard_admin/base.html.twig' %}
+
+{% block title %}Commande #VG-{{ commande.id }} - Administration{% endblock %}
+{% block page_title %}Détail Commande{% endblock %}
+
+{% block admin_content %}
+    <div x-data="{ showCancelModal: false, showEditModal: false }">
+        <div class="mb-6">
+            <a href="{{ path('admin_orders_list') }}" class="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors w-fit">
+                <span class="material-icons-outlined">arrow_back</span>
+                Retour à la liste
+            </a>
+        </div>
+    
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-2 space-y-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100">
+                        <h3 class="font-display font-bold text-lg text-text-main-light mb-4 flex items-center gap-2">
+                            <span class="material-icons-outlined text-primary">person</span>
+                            Client
+                        </h3>
+                        <div class="space-y-2 text-sm text-gray-700">
+                            <p class="font-semibold text-base">{{ commande.user.firstname }} {{ commande.user.lastname }}</p>
+                            <p class="flex items-center gap-2 text-gray-500">
+                                <span class="material-icons-outlined text-[16px]">mail</span> {{ commande.user.email }}
+                            </p>
+                            <p class="flex items-center gap-2 text-gray-500"><span class="material-icons-outlined text-[16px]">phone</span> {{ commande.user.phone }}</p>
+                        </div>
+                    </div>
+    
+                    <div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100">
+                        <h3 class="font-display font-bold text-lg text-text-main-light mb-4 flex items-center gap-2">
+                            <span class="material-icons-outlined text-primary">local_shipping</span>
+                            Livraison
+                        </h3>
+                        <div class="space-y-2 text-sm text-gray-700">
+                            <p class="font-semibold text-base">{{ commande.adresseLivraison }}</p>
+                            <p class="text-gray-500">{{ commande.codePostalLivraison }} {{ commande.villeLivraison }}</p>
+                            <div class="pt-2 mt-2 border-t border-gray-50">
+                                <p class="text-gray-600">Prévue le <span class="font-semibold text-primary">{{ commande.dateLivraison|date('d/m/Y') }}</span> à <span class="font-semibold text-primary">{{ commande.heureLivraison|date('H:i') }}</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
+                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
+                        <h3 class="font-display font-bold text-lg text-text-main-light">Contenu de la commande</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-start gap-4 pb-6 border-b border-gray-100">
+                            <div class="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm">
+                                <img src="{{ asset('images/menu_placeholder.jpg') }}" alt="{{ commande.menu.titre }}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-text-main-light">{{ commande.menu.titre }}</h4>
+                                <p class="text-sm text-gray-500 mb-2">Formule pour {{ commande.numPersons }} personne{{ commande.numPersons > 1 ? 's' : '' }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-lg text-primary">{{ commande.prixMenu }} €</p>
+                            </div>
+                        </div>
+    
+                        <div class="space-y-2 pt-4 text-sm">
+                            <div class="flex justify-between items-center text-gray-600">
+                                <span>Frais de livraison</span>
+                                <span class="font-medium">{{ commande.fraisLivraison }} €</span>
+                            </div>
+                            {% if commande.discount > 0 %}
+                                <div class="flex justify-between items-center text-green-600">
+                                    <span>Remise volume</span>
+                                    <span class="font-medium">-{{ commande.discount }} €</span>
+                                </div>
+                            {% endif %}
+                            <div class="pt-4 mt-2 border-t border-gray-100 flex justify-between items-end">
+                                <span class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Total TTC</span>
+                                <span class="text-2xl font-display font-bold text-primary">{{ commande.prixTotal }} €</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% if commande.statutCommande == 'EN_ATTENTE' %}
+                        <button @click="showEditModal = true" class="w-full py-3 px-4 bg-gray-100 text-gray-600 font-semibold rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+                            <span class="material-icons-outlined text-sm">edit</span>
+                            Modifier la commande
+                        </button>
+                    {% else %}
+                         <button disabled class="w-full py-3 px-4 bg-gray-50 text-gray-400 font-semibold rounded-full cursor-not-allowed flex items-center justify-center gap-2 border border-gray-100">
+                            <span class="material-icons-outlined text-sm">edit</span>
+                            Modifier la commande
+                        </button>
+                    {% endif %}
+    
+                    {% if commande.statutCommande == 'EN_ATTENTE' %}
+                        <button type="button" @click="showCancelModal = true" class="w-full py-3 px-4 border border-red-200 text-red-600 font-semibold rounded-full hover:bg-red-50 transition-colors flex items-center justify-center gap-2">
+                            <span class="material-icons-outlined text-sm">cancel</span>
+                            Annuler la commande
+                        </button>
+                    {% else %}
+                        <button disabled class="w-full py-3 px-4 bg-gray-50 text-gray-400 font-semibold rounded-full cursor-not-allowed flex items-center justify-center gap-2 border border-gray-100">
+                            <span class="material-icons-outlined text-sm">cancel</span>
+                            Annuler la commande
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+    
+            <div class="space-y-8">
+
+                {% if commande.statutCommande != 'ANNULEE' %}
+                <div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100">
+                    <h3 class="font-display font-bold text-lg text-text-main-light mb-4">Statut actuel</h3>
+                    
+                    <form method="post">
+                        <div class="relative">
+                            <select name="statut" onchange="this.form.submit()" class="w-full pl-4 pr-10 py-3 bg-white border border-gray-200 text-gray-700 rounded-lg appearance-none focus:ring-primary focus:border-primary text-sm font-medium cursor-pointer shadow-sm">
+                                <option value="EN_ATTENTE" {{ commande.statutCommande == 'EN_ATTENTE' ? 'selected' : '' }}>En attente de validation</option>
+                                <option value="EN_PREPARATION" {{ commande.statutCommande == 'EN_PREPARATION' ? 'selected' : '' }}>En préparation</option>
+                                <option value="EN_LIVRAISON" {{ commande.statutCommande == 'EN_LIVRAISON' ? 'selected' : '' }}>En livraison</option>
+                                <option value="LIVREE" {{ commande.statutCommande == 'LIVREE' ? 'selected' : '' }}>Livré</option>
+                                <option value="TERMINEE" {{ commande.statutCommande == 'TERMINEE' ? 'selected' : '' }}>Terminé</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+
+                <div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100">
+                    <h3 class="font-display font-bold text-lg text-text-main-light mb-6">Historique</h3>
+                    <div class="relative pl-6 border-l-2 border-gray-100 space-y-8">
+                        {% for history in historique %}
+                            <div class="relative">
+                                <div>
+                                    <p class="text-sm font-bold {{ loop.first ? 'text-primary' : 'text-gray-400' }}">
+                                        {{ history.statut|replace({'_': ' '})|capitalize }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                        <span class="material-icons-outlined text-[14px]">calendar_today</span>
+                                        {{ history.createdAt|date('d M Y - H:i') }}
+                                    </p>
+                                </div>
+                            </div>
+                        {% else %}
+                             <div class="relative">
+                                <div>
+                                    <p class="text-sm font-bold text-primary">Création</p>
+                                    <p class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                        <span class="material-icons-outlined text-[14px]">calendar_today</span>
+                                        {{ commande.createdAt|date('d M Y - H:i') }}
+                                    </p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div x-show="showCancelModal" style="display: none;" class="fixed inset-0 z-[60] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
+                <div x-show="showCancelModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" @click="showCancelModal = false" aria-hidden="true"></div>
+
+                <div x-show="showCancelModal" class="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="text-center mb-6">
+                            <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="material-icons-outlined text-3xl text-red-600">warning</span>
+                            </div>
+                            <h3 class="font-display font-bold text-2xl text-text-main mb-2">Annuler la commande</h3>
+                            <p class="text-sm text-gray-600 font-body">Veuillez confirmer que vous avez contacté le client avant de procéder à l'annulation.</p>
+                        </div>
+                        
+                        <form method="post" action="{{ path('admin_order_cancel', {'id': commande.id}) }}" class="space-y-6">
+                            <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ commande.id) }}">
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-text-main mb-2">Mode de contact</label>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <label class="cursor-pointer relative">
+                                        <input class="peer sr-only" name="contact_method" type="radio" value="phone" required/>
+                                        <div class="p-3 rounded-lg border border-gray-200 text-center peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all hover:bg-gray-50 flex items-center justify-center gap-2">
+                                            <span class="material-icons-outlined text-sm">phone</span>
+                                            <span class="text-sm font-medium">Téléphone</span>
+                                        </div>
+                                    </label>
+                                    <label class="cursor-pointer relative">
+                                        <input class="peer sr-only" name="contact_method" type="radio" value="email" required/>
+                                        <div class="p-3 rounded-lg border border-gray-200 text-center peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all hover:bg-gray-50 flex items-center justify-center gap-2">
+                                            <span class="material-icons-outlined text-sm">mail</span>
+                                            <span class="text-sm font-medium">Email</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-text-main mb-2" for="reason">Motif de l'annulation</label>
+                                <textarea name="reason" class="w-full p-4 rounded-xl border border-gray-200 focus:ring-primary focus:border-primary bg-white text-sm resize-none" id="reason" placeholder="Veuillez décrire la raison de l'annulation..." rows="4" required></textarea>
+                            </div>
+                            
+                            <div class="flex flex-row gap-4 pt-4">
+                                <button type="submit" class="flex-1 py-3 px-6 bg-red-600 text-white font-semibold rounded-full shadow-sm hover:bg-red-700 transition-colors flex items-center justify-center gap-2">
+                                    <span class="material-icons-outlined text-sm">cancel</span>
+                                    Confirmer l'annulation
+                                </button>
+                                <button type="button" @click="showCancelModal = false" class="flex-1 py-3 px-6 bg-white border border-gray-200 text-gray-600 font-semibold rounded-full hover:bg-gray-50 transition-colors">
+                                    Retour
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div x-show="showEditModal" style="display: none;" class="fixed inset-0 z-[60] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
+                <div x-show="showEditModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" @click="showEditModal = false" aria-hidden="true"></div>
+
+                <div x-show="showEditModal" class="relative inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl w-full">
+                    <div class="flex items-center justify-between px-8 py-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+                        <div>
+                            <h2 class="font-display font-bold text-2xl text-primary">Modifier la commande #VG-{{ commande.id }}</h2>
+                        </div>
+                        <button @click="showEditModal = false" class="text-gray-400 hover:text-primary transition-colors flex items-center">
+                            <span class="material-icons-outlined text-3xl">close</span>
+                        </button>
+                    </div>
+
+                    <form method="post" action="{{ path('admin_order_edit', {'id': commande.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('edit' ~ commande.id) }}">
+                        
+                        <div class="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                
+                                <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                                    <h3 class="font-display font-bold text-lg text-text-main mb-4 flex items-center gap-2">
+                                        <span class="material-icons-outlined text-primary">local_shipping</span>
+                                        Livraison
+                                    </h3>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-500 mb-1">Adresse postale</label>
+                                            <input name="adresse" class="w-full text-sm rounded-lg border-gray-300 focus:border-primary focus:ring-primary" type="text" value="{{ commande.adresseLivraison }}" required/>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-500 mb-1">Code Postal</label>
+                                                <input name="cp" class="w-full text-sm rounded-lg border-gray-300 focus:border-primary focus:ring-primary" type="text" value="{{ commande.codePostalLivraison }}" required/>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-500 mb-1">Ville</label>
+                                                <input name="ville" class="w-full text-sm rounded-lg border-gray-300 focus:border-primary focus:ring-primary" type="text" value="{{ commande.villeLivraison }}" required/>
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-500 mb-1">Date</label>
+                                                <input name="date" class="w-full text-sm rounded-lg border-gray-300 focus:border-primary focus:ring-primary" type="date" value="{{ commande.dateLivraison|date('Y-m-d') }}" required/>
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-medium text-gray-500 mb-1">Heure</label>
+                                                <input name="heure" class="w-full text-sm rounded-lg border-gray-300 focus:border-primary focus:ring-primary" type="time" value="{{ commande.heureLivraison|date('H:i') }}" required/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="border border-gray-100 rounded-xl overflow-hidden shadow-sm h-fit">
+                                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
+                                        <h3 class="font-display font-bold text-lg text-text-main">Contenu</h3>
+                                    </div>
+                                    <div class="p-6 space-y-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-500 mb-1">Menu sélectionné</label>
+                                            <select name="menu" class="w-full text-sm rounded-lg border-gray-300 focus:border-primary focus:ring-primary">
+                                                {% for menu in menus %}
+                                                    <option value="{{ menu.id }}" {{ commande.menu.id == menu.id ? 'selected' : '' }}>{{ menu.titre }} ({{ menu.basePrice }} €/pers)</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-500 mb-1">Nombre de personnes</label>
+                                            <input name="quantity" class="w-full text-sm rounded-lg border-gray-300 focus:border-primary focus:ring-primary" min="1" type="number" value="{{ commande.numPersons }}" required/>
+                                        </div>
+                                        
+                                        <div class="pt-4 mt-4 border-t border-gray-100 text-right">
+                                            <p class="text-xs text-gray-400 italic">Le prix sera recalculé automatiquement (Remises & Frais inclus)</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="px-8 py-5 bg-gray-50 border-t border-gray-100 flex gap-4">
+                            <button type="submit" class="flex-1 py-3 px-4 bg-primary text-white font-semibold rounded-full shadow-soft hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+                                <span class="material-icons-outlined text-sm">save</span>
+                                Enregistrer les modifications
+                            </button>
+                            <button type="button" @click="showEditModal = false" class="flex-1 py-3 px-4 border border-gray-200 text-gray-600 font-semibold text-sm rounded-full hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 bg-white shadow-sm">
+                                Annuler
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

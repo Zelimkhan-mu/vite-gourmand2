@@ -1,0 +1,92 @@
+{% extends 'dashboard_admin/base.html.twig' %}
+
+{% block title %}Gestion des Avis - Administration{% endblock %}
+{% block page_title %}Gestion des avis clients{% endblock %}
+
+{% block admin_content %}
+    <div class="flex items-center gap-8 pb-6 border-b border-gray-100 mb-8">
+        <a href="{{ path('admin_reviews_list') }}"
+           class="{{ currentFilter == 'tous' ? 'px-6 py-2 rounded-xl bg-primary text-white font-bold text-sm shadow-md' : 'text-gray-400 hover:text-gray-600 font-semibold text-sm transition-colors tracking-wide' }}">
+            Tous
+        </a>
+        <a href="{{ path('admin_reviews_list', {status: 'en_attente'}) }}"
+           class="{{ currentFilter == 'en_attente' ? 'px-6 py-2 rounded-xl bg-primary text-white font-bold text-sm shadow-md' : 'text-gray-400 hover:text-gray-600 font-semibold text-sm transition-colors tracking-wide' }}">
+            En attente
+        </a>
+        <a href="{{ path('admin_reviews_list', {status: 'valide'}) }}"
+           class="{{ currentFilter == 'valide' ? 'px-6 py-2 rounded-xl bg-primary text-white font-bold text-sm shadow-md' : 'text-gray-400 hover:text-gray-600 font-semibold text-sm transition-colors tracking-wide' }}">
+            Validés
+        </a>
+        <a href="{{ path('admin_reviews_list', {status: 'rejete'}) }}"
+           class="{{ currentFilter == 'rejete' ? 'px-6 py-2 rounded-xl bg-primary text-white font-bold text-sm shadow-md' : 'text-gray-400 hover:text-gray-600 font-semibold text-sm transition-colors tracking-wide' }}">
+            Rejetés
+        </a>
+    </div>
+
+    {% if reviews is empty %}
+        <div class="text-center py-16 text-gray-400">
+            <span class="material-icons-outlined text-5xl mb-4 block">reviews</span>
+            <p class="font-semibold">Aucun avis trouvé.</p>
+        </div>
+    {% else %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {% for review in reviews %}
+                <div class="bg-white rounded-2xl shadow-soft border border-gray-50 p-6 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex flex-col">
+                            <h3 class="font-display font-bold text-xl text-text-main leading-tight">{{ review.commande.menu.titre }}</h3>
+                            <div class="flex mt-1">
+                                {% for i in 1..5 %}
+                                    {% if i <= review.rating %}
+                                        <span class="material-icons-outlined text-[1.1rem]" style="color: #D4AF37;">star</span>
+                                    {% else %}
+                                        <span class="material-icons-outlined text-[1.1rem] text-gray-300">star</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <span class="text-[10px] uppercase tracking-widest font-bold
+                            {% if review.statut == 'validé' %}text-green-500
+                            {% elseif review.statut == 'refusé' %}text-red-400
+                            {% else %}text-gray-400{% endif %}">
+                            {% if review.statut == 'validé' %}Validé
+                            {% elseif review.statut == 'refusé' %}Refusé
+                            {% else %}En attente{% endif %}
+                        </span>
+                    </div>
+
+                    <p class="text-sm text-gray-600 mb-6 italic line-clamp-2">"{{ review.commentaire }}"</p>
+
+                    <div class="flex items-end justify-between border-t border-gray-50 pt-4">
+                        <div class="flex gap-8">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] uppercase font-semibold text-gray-400">Client</span>
+                                <span class="text-sm font-semibold text-text-main">{{ review.user.firstname }} {{ review.user.lastname }}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] uppercase font-semibold text-gray-400">Commande</span>
+                                <span class="text-xs text-gray-500 font-semibold">#VG-{{ review.commande.id }} • {{ review.createdAt|date('d M Y') }}</span>
+                            </div>
+                        </div>
+
+                        <form method="post" action="{{ path('admin_review_action', {id: review.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('review_action' ~ review.id) }}">
+                            <div class="relative inline-block">
+                                <select name="action" onchange="this.form.submit()"
+                                        class="appearance-none bg-gray-50 border border-gray-200 text-gray-600 text-[11px] uppercase tracking-wider font-bold py-1.5 pl-3 pr-8 rounded-lg cursor-pointer hover:bg-white transition-colors focus:ring-1 focus:ring-primary focus:border-primary">
+                                    <option value="" disabled selected>Actions</option>
+                                    {% if review.statut != 'validé' %}
+                                        <option value="valide">Valider</option>
+                                    {% endif %}
+                                    {% if review.statut != 'refusé' %}
+                                        <option value="rejete">Refuser</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

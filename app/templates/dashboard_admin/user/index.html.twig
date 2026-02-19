@@ -1,0 +1,226 @@
+{% extends 'dashboard_admin/base.html.twig' %}
+
+{% block title %}Gestion des Employés{% endblock %}
+
+{% block admin_content %}
+<div x-data="userManager()" x-cloak>
+
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="font-display font-bold text-2xl text-text-main-light">Gestion des employés</h1>
+            <p class="text-sm text-gray-500 mt-1">{{ users|length }} compte{{ users|length > 1 ? 's' : '' }} enregistré{{ users|length > 1 ? 's' : '' }}</p>
+        </div>
+        <button @click="openModal()"
+                class="hidden md:flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm">
+            <span class="material-icons-outlined text-lg">add</span>
+            Créer un compte employé
+        </button>
+    </div>
+
+    <button @click="openModal()"
+            class="md:hidden w-full flex items-center justify-center gap-2 bg-primary text-white px-5 py-3 rounded-xl font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm mb-6">
+        <span class="material-icons-outlined">add</span>
+        Créer un compte employé
+    </button>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% if users is empty %}
+            <div class="col-span-full text-center py-12 text-gray-500">
+                <span class="material-icons-outlined text-4xl mb-2 block">group_off</span>
+                <p>Aucun utilisateur trouvé.</p>
+            </div>
+        {% else %}
+            {% for user in users %}
+                <div class="bg-white rounded-2xl p-5 shadow-soft border border-gray-50 flex flex-col gap-4 hover:border-primary/20 transition-all duration-300 relative group">
+                    
+                    {% if 'ROLE_ADMIN' in user.roles %}
+                        <div class="absolute top-4 right-4 text-primary" title="Administrateur">
+                            <span class="material-icons-outlined text-lg">admin_panel_settings</span>
+                        </div>
+                    {% endif %}
+
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-sm shrink-0 border border-primary/20">
+                            {{ user.firstName|first|upper }}{{ user.lastName|first|upper }}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-bold text-text-main-light truncate text-sm" title="{{ user.email }}">{{ user.email }}</div>
+                            <div class="text-xs text-gray-500 truncate">{{ user.firstName }} {{ user.lastName }}</div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-xs mt-1">
+                        <span class="text-gray-400">Créé le {{ user.createdAt|date('d/m/Y') }}</span>
+                        <span class="px-2 py-0.5 rounded-full font-bold uppercase tracking-wider {{ user.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500' }}">
+                            {{ user.isActive ? 'Actif' : 'Inactif' }}
+                        </span>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-50 flex justify-between items-center gap-3 mt-auto">
+                        
+                        {% if user.id != app.user.id %}
+                             <button @click="confirmDelete({{ user.id }}, '{{ user.email|e('js') }}', '{{ csrf_token('user_delete_' ~ user.id) }}')" 
+                                     class="text-gray-400 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors"
+                                     title="Supprimer">
+                                <span class="material-icons-outlined text-lg">delete</span>
+                             </button>
+                        {% else %}
+                             <div class="w-8"></div>
+                        {% endif %}
+
+                        <div class="flex items-center gap-3">
+                            <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                                {{ user.isActive ? 'Désactiver' : 'Activer' }}
+                            </span>
+                            
+                            {% if user.id != app.user.id %}
+                                <form action="{{ path('admin_users_toggle', {id: user.id}) }}" method="post" class="flex items-center">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('user_toggle_' ~ user.id) }}">
+                                    <button type="submit" 
+                                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none {{ user.isActive ? 'bg-primary' : 'bg-gray-200' }}" 
+                                            role="switch" 
+                                            aria-checked="{{ user.isActive ? 'true' : 'false' }}">
+                                        <span class="sr-only">Toggle status</span>
+                                        <span aria-hidden="true" 
+                                              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ user.isActive ? 'translate-x-5' : 'translate-x-0' }}">
+                                        </span>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <div class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent bg-primary opacity-50 cursor-not-allowed">
+                                    <span class="inline-block h-5 w-5 transform rounded-full bg-white shadow translate-x-5"></span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div x-show="modalOpen" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+         @keydown.escape.window="modalOpen = false">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
+             @click.outside="modalOpen = false">
+
+            <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-white">
+                <h2 class="font-display font-bold text-xl text-text-main-light">Créer un compte employé</h2>
+                <button @click="modalOpen = false" class="text-gray-400 hover:text-primary transition-colors">
+                    <span class="material-icons-outlined">close</span>
+                </button>
+            </div>
+
+            <form action="{{ path('admin_users_create') }}" method="post" class="flex flex-col flex-1 overflow-hidden">
+                <input type="hidden" name="_token" value="{{ csrf_token('user_create') }}">
+                
+                <div class="p-6 overflow-y-auto space-y-5">
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-text-main-light mb-2">Adresse email</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <span class="material-icons-outlined text-xl">mail</span>
+                            </div>
+                            <input type="email" name="email" required
+                                   class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary/20 transition-all placeholder-gray-400" 
+                                   placeholder="ex: jean.dupont@viteetgourmand.fr">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-text-main-light mb-2">Prénom</label>
+                            <input type="text" name="firstName" required
+                                   class="block w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary/20 transition-all placeholder-gray-400" 
+                                   placeholder="Jean">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-text-main-light mb-2">Nom</label>
+                            <input type="text" name="lastName" required
+                                   class="block w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary/20 transition-all placeholder-gray-400" 
+                                   placeholder="Dupont">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-text-main-light mb-2">Mot de passe provisoire</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <span class="material-icons-outlined text-xl">lock</span>
+                            </div>
+                            <input type="password" name="password" required minlength="8"
+                                   class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-primary/20 transition-all placeholder-gray-400" 
+                                   placeholder="••••••••">
+                        </div>
+                        <p class="text-[11px] text-gray-500 mt-1.5 leading-tight">
+                            L'employé devra modifier son mot de passe lors de sa première connexion ou via son profil.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 flex-shrink-0">
+                    <button type="button" @click="modalOpen = false"
+                            class="px-5 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-full hover:bg-white hover:shadow-sm transition-all text-sm">
+                        Annuler
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2.5 bg-primary text-white font-semibold rounded-full hover:bg-primary/90 shadow-sm transition-colors text-sm">
+                        Créer le compte
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div x-show="deleteModalOpen" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8 text-center">
+            <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-icons-outlined text-red-500 text-2xl">person_remove</span>
+            </div>
+            <h3 class="font-display font-bold text-xl text-text-main-light mb-2">Supprimer ce compte ?</h3>
+            <p class="text-sm text-gray-500 mb-6">
+                Vous allez supprimer le compte de <strong x-text="deleteUserEmail"></strong>. Cette action est irréversible.
+            </p>
+            <div class="flex gap-3 justify-center">
+                <button @click="deleteModalOpen = false"
+                        class="px-5 py-2.5 rounded-full border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors">
+                    Annuler
+                </button>
+                <form :action="'/admin/utilisateurs/' + deleteUserId + '/supprimer'" method="post">
+                    <input type="hidden" name="_token" :value="deleteToken">
+                    <button type="submit"
+                            class="px-5 py-2.5 rounded-full bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-colors">
+                        Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function userManager() {
+    return {
+        modalOpen: false,
+        deleteModalOpen: false,
+        deleteUserId: null,
+        deleteUserEmail: '',
+        deleteToken: '',
+
+        openModal() {
+            this.modalOpen = true;
+        },
+
+        confirmDelete(id, email, token) {
+            this.deleteUserId = id;
+            this.deleteUserEmail = email;
+            this.deleteToken = token;
+            this.deleteModalOpen = true;
+        }
+    };
+}
+</script>
+{% endblock %}

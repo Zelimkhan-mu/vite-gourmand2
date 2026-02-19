@@ -1,0 +1,188 @@
+{% extends 'public.html.twig' %}
+
+{% block title %}Nos Menus - Vite & Gourmand{% endblock %}
+
+{% block body %}
+    <div class="max-w-7xl mx-auto px-6 md:px-12 pt-12 mb-12">
+        <h1>Nos menus</h1>
+        <p class="text-gray-400 italic font-body text-sm"><span id="menu-count">{{ menus|length }}</span> menus disponibles pour vous</p>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 pb-24">
+        
+        <div class="lg:col-span-3">
+            
+            <button id="filter-toggle" class="lg:hidden w-full bg-white border border-gray-200 p-4 rounded-lg flex justify-between items-center mb-6 shadow-sm">
+                <span class="font-display font-bold text-primary flex items-center gap-2">
+                    <span class="material-icons-outlined text-sm">tune</span> Filtrer
+                </span>
+                <span class="material-icons-outlined text-gray-400 transition-transform" id="filter-icon">expand_more</span>
+            </button>
+
+            <div id="filter-content" class="hidden lg:block bg-white p-8 rounded-lg shadow-soft border border-gray-50 sticky top-32">
+                
+                <div class="flex items-center gap-2 mb-8 border-b border-gray-100 pb-4">
+                    <span class="material-icons-outlined text-primary text-sm">tune</span>
+                    <h2>Filtrer</h2>
+                </div>
+
+                <div class="mb-8">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 block">Prix Maximum</label>
+                    <div class="relative w-full">
+                        <input type="number" id="max-price-input" value="100" min="0" class="w-full border border-gray-200 rounded px-3 py-2 text-sm text-text-main focus:border-primary focus:ring-primary">
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">€</span>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 block">Thème</label>
+                    <div class="space-y-3">
+                        {% for theme in themes %}
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" value="{{ theme.id }}" class="theme-filter appearance-none w-4 h-4 border border-gray-300 rounded checked:bg-primary checked:border-primary transition focus:ring-primary">
+                            <span class="text-sm text-gray-600 group-hover:text-primary transition">{{ theme.nom }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 block">Régime</label>
+                    <div class="space-y-3">
+                        {% for regime in regimes %}
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" value="{{ regime.id }}" class="regime-filter appearance-none w-4 h-4 border border-gray-300 rounded checked:bg-primary checked:border-primary transition focus:ring-primary">
+                            <span class="text-sm text-gray-600 group-hover:text-primary transition">{{ regime.nom }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 block">Nombre de personnes min.</label>
+                    <input type="number" id="min-persons" placeholder="10" class="w-full border border-gray-200 rounded px-3 py-2 text-sm text-text-main focus:border-primary focus:ring-primary">
+                </div>
+
+            </div>
+        </div>
+
+        <div class="lg:col-span-9">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="menu-grid">
+                
+                {% for menu in menus %}
+                <div class="menu-item group bg-white rounded-2xl overflow-hidden shadow-card hover:shadow-xl transition duration-300"
+                     data-price="{{ menu.basePrice }}"
+                     data-theme="{{ menu.theme.id }}"
+                     data-regime="{{ menu.regime.id }}"
+                     data-persons="{{ menu.minPersons }}">
+                    
+                    <div class="relative h-64 overflow-hidden">
+                        {% import 'partials/_macros.html.twig' as macros %}
+                        {% set couverturePath = macros.get_menu_cover_path(menu)|trim %}
+
+                        {% if couverturePath %}
+                            <img src="{{ asset('images/' ~ couverturePath) }}" alt="{{ menu.titre }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                        {% else %}
+                            <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">Pas d'image</div>
+                        {% endif %}
+                        
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-6">
+                            <h3>{{ menu.titre }}</h3>
+                            <p class="text-gray-300 text-xs font-light italic mb-0 pr-20 line-clamp-3">{{ menu.description }}</p>
+                            <div class="absolute bottom-6 right-6">
+                                <div class="flex items-baseline">
+                                    <span class="font-display text-2xl text-white font-bold">{{ menu.basePrice }}€</span>
+                                    <span class="text-[10px] text-gray-300 ml-1">/p</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 flex justify-between items-center border-t border-gray-50">
+                        <div class="flex items-center gap-2 text-gray-400 text-[10px]">
+                            <span class="material-icons-outlined text-xs">group</span>
+                            <span>min. {{ menu.minPersons }} personnes</span>
+                        </div>
+                        <a href="{{ path('app_menu_detail', {'id': menu.id}) }}" class="text-[10px] font-bold text-primary uppercase tracking-widest hover:text-red-900 transition flex items-center gap-1">
+                            Détails <span class="material-icons-outlined text-[10px]">arrow_forward</span>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div id="no-results" class="hidden col-span-full text-center py-12">
+                    <span class="material-icons-outlined text-4xl text-gray-300 mb-2">restaurant_menu</span>
+                    <p class="text-gray-500">Aucun menu ne correspond à vos critères.</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile Filter Toggle
+            const filterBtn = document.getElementById('filter-toggle');
+            const filterContent = document.getElementById('filter-content');
+            const filterIcon = document.getElementById('filter-icon');
+
+            filterBtn.addEventListener('click', () => {
+                filterContent.classList.toggle('hidden');
+                filterIcon.textContent = filterContent.classList.contains('hidden') ? 'expand_more' : 'expand_less';
+            });
+
+            // Filtering Logic
+            const maxPriceInput = document.getElementById('max-price-input');
+            const themeCheckboxes = document.querySelectorAll('.theme-filter');
+            const regimeCheckboxes = document.querySelectorAll('.regime-filter');
+            const minPersonsInput = document.getElementById('min-persons');
+            const menuItems = document.querySelectorAll('.menu-item');
+            const menuCount = document.getElementById('menu-count');
+            const noResults = document.getElementById('no-results');
+
+            function filterMenus() {
+                const maxPrice = parseFloat(maxPriceInput.value) || 1000;
+                const selectedThemes = Array.from(themeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+                const selectedRegimes = Array.from(regimeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+                const minPersons = parseInt(minPersonsInput.value) || 0;
+
+                let visibleCount = 0;
+
+                menuItems.forEach(item => {
+                    const price = parseFloat(item.dataset.price);
+                    const themeId = item.dataset.theme;
+                    const regimeId = item.dataset.regime;
+                    const persons = parseInt(item.dataset.persons);
+
+                    let isVisible = true;
+
+                    if (price > maxPrice) isVisible = false;
+                    if (selectedThemes.length > 0 && !selectedThemes.includes(themeId)) isVisible = false;
+                    if (selectedRegimes.length > 0 && !selectedRegimes.includes(regimeId)) isVisible = false;
+                    if (persons < minPersons) isVisible = false;
+
+                    if (isVisible) {
+                        item.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+
+                menuCount.textContent = visibleCount;
+                if (visibleCount === 0) {
+                    noResults.classList.remove('hidden');
+                } else {
+                    noResults.classList.add('hidden');
+                }
+            }
+
+            // Event Listeners
+            maxPriceInput.addEventListener('input', filterMenus);
+            
+            themeCheckboxes.forEach(cb => cb.addEventListener('change', filterMenus));
+            regimeCheckboxes.forEach(cb => cb.addEventListener('change', filterMenus));
+            minPersonsInput.addEventListener('input', filterMenus);
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,34 @@
+
+{% macro badge_statut_commande(statut) %}
+    {% set badgeClass = 'bg-gray-100 text-gray-800' %}
+    {% if statut == 'EN_ATTENTE' %}
+        {% set badgeClass = 'bg-blue-50 text-blue-700' %}
+    {% elseif statut in ['LIVREE', 'TERMINEE'] %}
+        {% set badgeClass = 'bg-green-50 text-green-700' %}
+    {% elseif statut == 'ANNULEE' %}
+        {% set badgeClass = 'bg-red-50 text-red-700' %}
+    {% elseif statut in ['EN_COURS', 'EN_PREPARATION', 'EN_LIVRAISON'] %}
+        {% set badgeClass = 'bg-orange-50 text-orange-700' %}
+    {% endif %}
+
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase {{ badgeClass }}">
+        {{ statut|replace({'_': ' '}) }}
+    </span>
+{% endmacro %}
+
+{% macro get_menu_cover_path(menu) %}
+    {% set couverturePath = null %}
+    {% for plat in menu.plats %}
+        {% if couverturePath is null and plat.type == 'plat' and plat.images is not empty %}
+            {% set couverturePath = plat.images|first.imagePath %}
+        {% endif %}
+    {% endfor %}
+    {% if couverturePath is null %}
+        {% for plat in menu.plats %}
+            {% if couverturePath is null and plat.images is not empty %}
+                {% set couverturePath = plat.images|first.imagePath %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+    {{ couverturePath }}
+{% endmacro %}

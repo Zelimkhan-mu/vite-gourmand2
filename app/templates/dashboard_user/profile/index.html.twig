@@ -1,0 +1,112 @@
+{% extends 'dashboard_user/base.html.twig' %}
+
+{% block title %}Mon Profil - Vite & Gourmand{% endblock %}
+
+{% block dashboard_content %}
+    <h2 class="font-display font-bold text-3xl text-text-main-light mb-8">Mon profil</h2>
+    
+    {% for message in app.flashes('success') %}
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <span class="block sm:inline">{{ message }}</span>
+        </div>
+    {% endfor %}
+
+    <section class="bg-white rounded-2xl shadow-soft p-8 md:p-10 border border-gray-50 mb-8">
+        <div class="mb-8">
+            <h3 class="font-display font-bold text-2xl text-text-main-light">Informations personnelles</h3>
+            <div class="w-16 h-1 bg-gold mt-2 rounded-full"></div>
+        </div>
+
+        {{ form_start(formEdit, {'attr': {'class': 'space-y-6'}}) }}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    {{ form_label(formEdit.lastName, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+                    {{ form_widget(formEdit.lastName, {'attr': {'class': 'w-full px-4 py-3 rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 bg-gray-50/50 text-text-main-light transition-all placeholder:text-gray-400'}}) }}
+                    {{ form_errors(formEdit.lastName, {'attr': {'class': 'text-red-500 text-xs mt-1'}}) }}
+                </div>
+                <div>
+                    {{ form_label(formEdit.firstName, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+                    {{ form_widget(formEdit.firstName, {'attr': {'class': 'w-full px-4 py-3 rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 bg-gray-50/50 text-text-main-light transition-all placeholder:text-gray-400'}}) }}
+                    {{ form_errors(formEdit.firstName, {'attr': {'class': 'text-red-500 text-xs mt-1'}}) }}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    {{ form_label(formEdit.email, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+                    {{ form_widget(formEdit.email, {'attr': {'class': 'w-full px-4 py-3 rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 bg-gray-50/50 text-text-main-light transition-all placeholder:text-gray-400'}}) }}
+                    {{ form_errors(formEdit.email, {'attr': {'class': 'text-red-500 text-xs mt-1'}}) }}
+                </div>
+                <div>
+                    {{ form_label(formEdit.phone, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+                    {{ form_widget(formEdit.phone, {'attr': {'class': 'w-full px-4 py-3 rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 bg-gray-50/50 text-text-main-light transition-all placeholder:text-gray-400'}}) }}
+                    {{ form_errors(formEdit.phone, {'attr': {'class': 'text-red-500 text-xs mt-1'}}) }}
+                </div>
+            </div>
+
+            <div>
+                {{ form_label(formEdit.adresse, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+                {{ form_widget(formEdit.adresse, {'attr': {'class': 'w-full px-4 py-3 rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 bg-gray-50/50 text-text-main-light transition-all placeholder:text-gray-400'}}) }}
+                {{ form_errors(formEdit.adresse, {'attr': {'class': 'text-red-500 text-xs mt-1'}}) }}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    {{ form_label(formEdit.codePostal, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+                    {{ form_widget(formEdit.codePostal, {'attr': {'class': 'w-full px-4 py-3 rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 bg-gray-50/50 text-text-main-light transition-all placeholder:text-gray-400'}}) }}
+                    {{ form_errors(formEdit.codePostal, {'attr': {'class': 'text-red-500 text-xs mt-1'}}) }}
+                </div>
+                <div>
+                    {{ form_label(formEdit.ville, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+                    {{ form_widget(formEdit.ville, {'attr': {'class': 'w-full px-4 py-3 rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 bg-gray-50/50 text-text-main-light transition-all placeholder:text-gray-400'}}) }}
+                    {{ form_errors(formEdit.ville, {'attr': {'class': 'text-red-500 text-xs mt-1'}}) }}
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <button class="btn-primary" type="submit">
+                    Enregistrer les modifications
+                </button>
+            </div>
+        {{ form_end(formEdit) }}
+    </section>
+
+    <section class="bg-white rounded-2xl shadow-soft p-8 md:p-10 border border-gray-50">
+        <div class="mb-8">
+            <h3 class="font-display font-bold text-2xl text-text-main-light">Modifier le mot de passe</h3>
+            <div class="w-16 h-1 bg-gold mt-2 rounded-full"></div>
+        </div>
+
+        {{ form_start(formPassword, {'attr': {'class': 'space-y-6 max-w-2xl'}}) }}
+            <div>
+                {{ form_label(formPassword.currentPassword, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+                {{ form_widget(formPassword.currentPassword, {'attr': {'class': 'w-full px-4 py-3 rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 bg-gray-50/50 text-text-main-light transition-all'}}) }}
+                {{ form_errors(formPassword.currentPassword, {'attr': {'class': 'text-red-500 text-xs mt-1'}}) }}
+            </div>
+
+            <div>
+                {{ form_label(formPassword.newPassword.first, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+                {{ form_widget(formPassword.newPassword.first, {'attr': {'class': 'w-full px-4 py-3 rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 bg-gray-50/50 text-text-main-light transition-all'}}) }}
+                {{ form_errors(formPassword.newPassword.first, {'attr': {'class': 'text-red-500 text-xs mt-1'}}) }}
+                
+                <div class="pt-2">
+                    <p class="text-xs text-gray-500">
+                        Min. 10 caractères
+                    </p>
+                </div>
+            </div>
+
+            <div>
+                {{ form_label(formPassword.newPassword.second, null, {'label_attr': {'class': 'block text-sm font-semibold text-gray-700 mb-2'}}) }}
+                {{ form_widget(formPassword.newPassword.second, {'attr': {'class': 'w-full px-4 py-3 rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 bg-gray-50/50 text-text-main-light transition-all'}}) }}
+                {{ form_errors(formPassword.newPassword.second, {'attr': {'class': 'text-red-500 text-xs mt-1'}}) }}
+            </div>
+
+            <div class="pt-4">
+                <button class="btn-primary" type="submit">
+                    Modifier le mot de passe
+                </button>
+            </div>
+        {{ form_end(formPassword) }}
+    </section>
+{% endblock %}

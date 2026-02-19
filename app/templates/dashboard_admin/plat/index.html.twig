@@ -1,0 +1,435 @@
+{% extends 'dashboard_admin/base.html.twig' %}
+
+{% block title %}Gestion des Plats - Administration{% endblock %}
+{% block page_title %}Gestion du catalogue Plats{% endblock %}
+
+{% block header_actions %}
+    <button
+        @click="$dispatch('open-modal', { mode: 'create' })"
+        class="bg-primary text-white px-5 py-2 rounded-full font-semibold text-sm hover:bg-primary/90 transition-colors flex items-center gap-2">
+        <span class="material-icons-outlined text-lg">add</span>
+        Ajouter un plat
+    </button>
+{% endblock %}
+
+{% block admin_content %}
+<div x-data="platManager()" @open-modal.window="openModal($event.detail)">
+
+    <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar md:bg-white md:p-2 md:rounded-xl md:shadow-sm md:border md:border-gray-100 md:w-fit md:pb-2">
+        {% for label, value in {'Tous': 'tous', 'Entrées': 'entree', 'Plats': 'plat', 'Desserts': 'dessert'} %}
+            {% set isActive = (currentFilter == value) %}
+            <a href="{{ path('admin_plats_list', {type: value}) }}"
+               class="px-5 py-2 whitespace-nowrap text-sm font-medium transition-colors
+                      {{ isActive ? 'bg-primary text-white font-semibold shadow-sm' : 'bg-white text-gray-500 md:bg-transparent' }}
+                      rounded-full md:rounded-lg">
+                {{ label }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <div class="lg:hidden mb-5">
+        <button
+            @click="$dispatch('open-modal', { mode: 'create' })"
+            class="w-full bg-primary text-white py-3 rounded-full font-semibold text-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+            <span class="material-icons-outlined text-lg">add</span>
+            Ajouter un plat
+        </button>
+    </div>
+
+    <div class="space-y-4">
+        {% if plats is empty %}
+            <div class="text-center py-12 text-gray-500">
+                <span class="material-icons-outlined text-4xl mb-2 block">dinner_dining</span>
+                <p>Aucun plat trouvé.</p>
+            </div>
+        {% else %}
+            {% for plat in plats %}
+                <div class="bg-white rounded-2xl shadow-soft p-4 md:p-5 border border-gray-100 hover:border-primary/20 transition-all duration-300">
+                    <div class="flex gap-4 md:gap-6">
+                        <div class="w-20 h-20 md:w-24 md:h-24 shrink-0 bg-[#F0EFED] rounded-xl overflow-hidden border border-gray-100">
+                            {% if plat.images|length > 0 %}
+                                <img src="{{ asset('images/' ~ plat.images|first.imagePath) }}"
+                                     alt="{{ plat.nom }}"
+                                     class="w-full h-full object-cover"/>
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-gray-300">
+                                    <span class="material-icons-outlined text-2xl">image</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="flex-1 min-w-0 flex flex-col md:flex-row md:items-center md:gap-6">
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-display font-bold text-lg text-text-main-light leading-tight">{{ plat.nom }}</h3>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    {% if plat.type == 'entree' %}Entrée
+                                    {% elseif plat.type == 'plat' %}Plat principal
+                                    {% elseif plat.type == 'dessert' %}Dessert
+                                    {% else %}{{ plat.type }}{% endif %}
+                                </p>
+                                {% if plat.allergenes|length > 0 %}
+                                    <p class="text-xs text-gray-400 mt-2 italic">
+                                        Allergènes&nbsp;: {{ plat.allergenes|map(a => a.nom)|join(', ') }}
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                            <div class="hidden md:flex items-center gap-2 shrink-0">
+                                <button
+                                    @click="openModal({
+                                        mode: 'edit',
+                                        plat: {
+                                            id: {{ plat.id }},
+                                            nom: {{ plat.nom|json_encode }},
+                                            description: {{ plat.description|json_encode }},
+                                            type: {{ plat.type|json_encode }},
+                                            allergenes: [{% for a in plat.allergenes %}{ id: {{ a.id }} }{% if not loop.last %},{% endif %}{% endfor %}],
+                                            images: [{% for img in plat.images %}{id: {{ img.id }}, imagePath: {{ img.imagePath|json_encode }}, altText: {{ (img.altText ?? '')|json_encode }} }{% if not loop.last %},{% endif %}{% endfor %}]
+                                        }
+                                    })"
+                                    class="p-2 text-primary hover:bg-primary/5 rounded-full transition-colors"
+                                    title="Modifier">
+                                    <span class="material-icons-outlined">edit</span>
+                                </button>
+                                <button
+                                    @click="confirmDelete({{ plat.id }}, '{{ plat.nom|e('js') }}')"
+                                    class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                    title="Supprimer">
+                                    <span class="material-icons-outlined">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex justify-end gap-2 pt-3 border-t border-gray-50 md:hidden">
+                        <button
+                            @click="openModal({
+                                mode: 'edit',
+                                plat: {
+                                    id: {{ plat.id }},
+                                    nom: {{ plat.nom|json_encode }},
+                                    description: {{ plat.description|json_encode }},
+                                    type: {{ plat.type|json_encode }},
+                                    allergenes: [{% for a in plat.allergenes %}{ id: {{ a.id }} }{% if not loop.last %},{% endif %}{% endfor %}],
+                                    images: [{% for img in plat.images %}{id: {{ img.id }}, imagePath: {{ img.imagePath|json_encode }}, altText: {{ (img.altText ?? '')|json_encode }} }{% if not loop.last %},{% endif %}{% endfor %}]
+                                }
+                            })"
+                            class="p-2 text-primary hover:bg-primary/5 rounded-full transition-colors"
+                            title="Modifier">
+                            <span class="material-icons-outlined">edit</span>
+                        </button>
+                        <button
+                            @click="confirmDelete({{ plat.id }}, '{{ plat.nom|e('js') }}')"
+                            class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                            title="Supprimer">
+                            <span class="material-icons-outlined">delete</span>
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+            <div class="py-2 text-center">
+                <span class="text-xs text-gray-400">
+                    <span class="font-semibold text-gray-600">{{ plats|length }}</span>
+                    plat{{ plats|length > 1 ? 's' : '' }} affiché{{ plats|length > 1 ? 's' : '' }}
+                </span>
+            </div>
+        {% endif %}
+    </div>
+
+
+    <div x-show="modalOpen" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+         @keydown.escape.window="modalOpen = false">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+             @click.outside="modalOpen = false">
+
+            <div class="px-8 py-6 border-b border-gray-100 flex items-center justify-between flex-shrink-0 bg-white sticky top-0 z-10">
+                <h2 class="font-display font-bold text-2xl text-text-main-light"
+                    x-text="modalMode === 'create' ? 'Ajouter un nouveau plat' : 'Modifier le plat'"></h2>
+                <button @click="modalOpen = false" class="text-gray-400 hover:text-primary transition-colors">
+                    <span class="material-icons-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="p-8 overflow-y-auto space-y-6">
+
+                <div>
+                    <label class="block text-sm font-semibold text-text-main-light mb-2" for="dishName">Nom du plat</label>
+                    <input type="text" id="dishName" x-model="form.nom"
+                           class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light placeholder-gray-400"
+                           placeholder="Ex: Magret de Canard"/>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-text-main-light mb-2" for="dishDescription">Description rapide</label>
+                    <textarea id="dishDescription" x-model="form.description" rows="3"
+                              class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light placeholder-gray-400 resize-none"
+                              placeholder="Brève description des saveurs et de la composition..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-text-main-light mb-2" for="dishCategory">Catégorie</label>
+                        <select id="dishCategory" x-model="form.type"
+                                class="w-full rounded-lg border-gray-200 focus:border-primary focus:ring-primary/20 text-text-main-light">
+                            <option value="" disabled>Choisir une catégorie</option>
+                            <option value="entree">Entrée</option>
+                            <option value="plat">Plat principal</option>
+                            <option value="dessert">Dessert</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-text-main-light mb-2">Allergènes</label>
+                        <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                            <button type="button"
+                                    @click="open = !open"
+                                    class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm flex items-center justify-between focus:border-primary focus:ring-1 focus:ring-primary/20 transition-colors">
+                                <span x-text="form.allergenes.length === 0 ? 'Choisir les allergènes' : form.allergenes.length + ' sélectionné(s)'"
+                                      :class="form.allergenes.length === 0 ? 'text-gray-400' : 'text-text-main-light'"></span>
+                                <span class="material-icons-outlined text-gray-400 text-base transition-transform" :class="open ? 'rotate-180' : ''">expand_more</span>
+                            </button>
+                            <div x-show="open" x-cloak
+                                 class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-soft overflow-hidden max-h-48 overflow-y-auto">
+                                {% for allergene in allergenes %}
+                                    <label class="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors">
+                                        <input type="checkbox"
+                                               value="{{ allergene.id }}"
+                                               x-model="form.allergenes"
+                                               class="rounded border-gray-300 text-primary focus:ring-primary/20"/>
+                                        <span class="text-sm text-text-main-light">{{ allergene.nom }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div x-show="form.allergenes.length > 0" class="flex flex-wrap gap-1.5 mt-2">
+                            {% for allergene in allergenes %}
+                                <template x-if="form.allergenes.includes('{{ allergene.id }}')">
+                                    <span class="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-semibold px-2.5 py-1 rounded-full">
+                                        {{ allergene.nom }}
+                                        <button type="button"
+                                                @click="form.allergenes = form.allergenes.filter(id => id !== '{{ allergene.id }}')"
+                                                class="hover:text-primary/70 transition-colors leading-none">
+                                            <span class="material-icons-outlined" style="font-size:0.75rem">close</span>
+                                        </button>
+                                    </span>
+                                </template>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-text-main-light mb-2">Photo du plat</label>
+
+                    <label class="border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors group block">
+                        <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 group-hover:text-primary mb-3 transition-colors">
+                            <span class="material-icons-outlined">cloud_upload</span>
+                        </div>
+                        <p class="text-sm font-medium text-text-main-light">Cliquez pour importer</p>
+                        <p class="text-xs text-gray-400 mt-1">PNG, JPG jusqu'à 5MB — 1 photo par plat</p>
+                        <input type="file" id="imageUploadInput" accept="image/*" class="hidden"
+                               @change="previewImages($event)"/>
+                    </label>
+
+                    <div class="mt-4">
+                        <template x-if="newImagePreviews.length > 0">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Nouvelle photo</p>
+                                <div class="flex gap-3">
+                                    <div class="w-20 h-20 rounded-lg border-2 border-primary overflow-hidden relative flex-shrink-0">
+                                        <img :src="newImagePreviews[0]" class="w-full h-full object-cover"/>
+                                        <div class="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                            <span class="material-icons-outlined text-white text-sm">check_circle</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-if="newImagePreviews.length === 0 && modalMode === 'edit' && existingImages.length > 0">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Photo actuelle</p>
+                                <div class="flex gap-3">
+                                    <div class="w-20 h-20 rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+                                        <img :src="'/images/' + existingImages[0].imagePath" :alt="existingImages[0].altText" class="w-full h-full object-cover"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-8 py-5 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-3 flex-shrink-0">
+                <button @click="modalOpen = false"
+                        class="bg-white text-gray-600 px-6 py-2.5 rounded-full font-semibold text-sm border border-gray-200 hover:bg-gray-50 hover:text-text-main-light transition-colors">
+                    Annuler
+                </button>
+                <button @click="submitForm()"
+                        class="bg-primary text-white px-6 py-2.5 rounded-full font-semibold text-sm hover:bg-primary/90 transition-colors shadow-sm">
+                    Enregistrer le plat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="deleteModalOpen" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8 text-center">
+            <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-icons-outlined text-red-500 text-2xl">delete_forever</span>
+            </div>
+            <h3 class="font-display font-bold text-xl text-text-main-light mb-2">Supprimer ce plat ?</h3>
+            <p class="text-sm text-gray-500 mb-6">
+                Vous allez supprimer <strong x-text="deletePlatName"></strong>. Cette action est irréversible.
+            </p>
+            <div class="flex gap-3 justify-center">
+                <button @click="deleteModalOpen = false"
+                        class="px-6 py-2.5 rounded-full border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors">
+                    Annuler
+                </button>
+                <form :action="'/admin/plats/' + deletePlatId + '/supprimer'" method="post">
+                    <input type="hidden" name="_token" :value="deleteToken">
+                    <button type="submit"
+                            class="px-6 py-2.5 rounded-full bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-colors">
+                        Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <form id="platForm" method="post" enctype="multipart/form-data" class="hidden">
+        <input type="hidden" name="_token" id="platFormToken">
+        <input type="hidden" name="nom" id="platFormNom">
+        <input type="hidden" name="description" id="platFormDescription">
+        <input type="hidden" name="type" id="platFormType">
+        <div id="platFormAllergenes"></div>
+        <input type="file" name="images[]" id="platFormImages" multiple>
+    </form>
+</div>
+
+<script>
+function platManager() {
+    return {
+        modalOpen: false,
+        modalMode: 'create',
+        deleteModalOpen: false,
+        deletePlatId: null,
+        deletePlatName: '',
+        deleteToken: '',
+        existingImages: [],
+        newImagePreviews: [],
+        newImageFiles: [],
+        editPlatId: null,
+        form: {
+            nom: '',
+            description: '',
+            type: '',
+            allergenes: [],
+        },
+
+        openModal(detail) {
+            this.modalMode = detail.mode;
+            this.newImagePreviews = [];
+            this.newImageFiles = [];
+            document.getElementById('imageUploadInput').value = '';
+
+            if (detail.mode === 'create') {
+                this.form = { nom: '', description: '', type: '', allergenes: [] };
+                this.existingImages = [];
+                this.editPlatId = null;
+            } else {
+                const p = detail.plat;
+                this.editPlatId = p.id;
+                this.form = {
+                    nom: p.nom || '',
+                    description: p.description || '',
+                    type: p.type || '',
+                    allergenes: (p.allergenes || []).map(a => String(a.id)),
+                };
+                this.existingImages = p.images || [];
+            }
+            this.modalOpen = true;
+        },
+
+        previewImages(event) {
+            const files = Array.from(event.target.files);
+            this.newImageFiles = files;
+            this.newImagePreviews = [];
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => this.newImagePreviews.push(e.target.result);
+                reader.readAsDataURL(file);
+            });
+        },
+
+        submitForm() {
+            const form = document.getElementById('platForm');
+
+            if (this.modalMode === 'create') {
+                form.action = '/admin/plats/nouveau';
+                document.getElementById('platFormToken').value = '{{ csrf_token("plat_create") }}';
+            } else {
+                form.action = '/admin/plats/' + this.editPlatId + '/modifier';
+                const tokens = window.__csrfEditTokens || {};
+                document.getElementById('platFormToken').value = tokens[this.editPlatId] || '';
+            }
+
+            document.getElementById('platFormNom').value = this.form.nom;
+            document.getElementById('platFormDescription').value = this.form.description;
+            document.getElementById('platFormType').value = this.form.type;
+
+            // Allergènes
+            const allergDiv = document.getElementById('platFormAllergenes');
+            allergDiv.innerHTML = '';
+            this.form.allergenes.forEach(id => {
+                const inp = document.createElement('input');
+                inp.type = 'hidden';
+                inp.name = 'allergenes[]';
+                inp.value = id;
+                allergDiv.appendChild(inp);
+            });
+
+            // Images : transférer les fichiers
+            const dt = new DataTransfer();
+            this.newImageFiles.forEach(f => dt.items.add(f));
+            document.getElementById('platFormImages').files = dt.files;
+
+            form.submit();
+        },
+
+        confirmDelete(id, name) {
+            this.deletePlatId = id;
+            this.deletePlatName = name;
+            this.deleteToken = this.getCsrfForDelete(id);
+            this.deleteModalOpen = true;
+        },
+
+        getCsrfToken(intention) {
+            // Le token CSRF est généré côté serveur, on le récupère via data-attribute
+            const el = document.querySelector('[data-csrf-' + intention + ']');
+            return el ? el.dataset['csrf' + intention] : '';
+        },
+
+        getCsrfForDelete(id) {
+            const el = document.querySelector('[data-csrf-delete-' + id + ']');
+            return el ? el.getAttribute('data-csrf-delete-' + id) : '';
+        }
+    }
+}
+</script>
+
+{% for plat in plats %}
+    <span class="hidden"
+          data-csrf-delete-{{ plat.id }}="{{ csrf_token('plat_delete' ~ plat.id) }}"></span>
+{% endfor %}
+
+<script>
+// Map des tokens CSRF d'édition
+window.__csrfEditTokens = {
+    {% for plat in plats %}
+    '{{ plat.id }}': '{{ csrf_token("plat_edit" ~ plat.id) }}',
+    {% endfor %}
+};
+</script>
+{% endblock %}

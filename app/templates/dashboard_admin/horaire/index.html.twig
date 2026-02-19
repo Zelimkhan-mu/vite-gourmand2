@@ -1,0 +1,72 @@
+{% extends 'dashboard_admin/base.html.twig' %}
+
+{% block title %}Gestion des Horaires - Administration{% endblock %}
+{% block page_title %}Gestion des horaires{% endblock %}
+
+{% block admin_content %}
+    <form method="post" action="{{ path('admin_horaires_update') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('horaires_update') }}">
+
+        <div class="bg-white rounded-2xl shadow-soft border border-gray-50 p-8 md:p-10 space-y-0">
+            {% set jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'] %}
+            {% for jour in jours %}
+                {% set h = horaires[jour] %}
+                {% set key = jour|lower %}
+                {% set isClosed = h.isClosed %}
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-5 border-b border-gray-100 last:border-0"
+                     x-data="{ ferme: {{ isClosed ? 'true' : 'false' }} }">
+
+                    <div class="w-28 flex-shrink-0">
+                        <h3 class="font-display font-bold text-xl text-text-main-light">{{ jour }}</h3>
+                    </div>
+
+                    <div class="flex flex-1 items-center gap-3 sm:gap-6" :class="ferme ? 'opacity-40 pointer-events-none' : ''">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Ouverture</label>
+                            <input
+                                type="time"
+                                name="ouverture_{{ key }}"
+                                class="form-input rounded-lg border-gray-200 text-sm focus:border-primary focus:ring-primary w-28 bg-gray-50"
+                                value="{{ h.ouvertureHeure is not null ? ((h.ouvertureHeure < 10 ? '0' : '') ~ h.ouvertureHeure ~ ':' ~ (h.ouvertureMinutes < 10 ? '0' : '') ~ h.ouvertureMinutes) : '' }}"
+                                :disabled="ferme"
+                            />
+                        </div>
+                        <span class="text-gray-300 font-medium mt-4">—</span>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Fermeture</label>
+                            <input
+                                type="time"
+                                name="fermeture_{{ key }}"
+                                class="form-input rounded-lg border-gray-200 text-sm focus:border-primary focus:ring-primary w-28 bg-gray-50"
+                                value="{{ h.fermetureHeure is not null ? ((h.fermetureHeure < 10 ? '0' : '') ~ h.fermetureHeure ~ ':' ~ (h.fermetureMinutes < 10 ? '0' : '') ~ h.fermetureMinutes) : '' }}"
+                                :disabled="ferme"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                        <span class="text-sm font-medium text-gray-500">Fermé</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="hidden" name="ferme_{{ key }}" :value="ferme ? '1' : '0'">
+                            <input
+                                type="checkbox"
+                                class="sr-only peer"
+                                x-model="ferme"
+                                {{ isClosed ? 'checked' : '' }}
+                            />
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-8 flex justify-center">
+            <button type="submit" class="px-12 py-3 rounded-full bg-primary text-white font-bold text-base shadow-soft hover:bg-primary/90 transition-all hover:-translate-y-0.5 flex items-center gap-2">
+                <span class="material-icons-outlined text-sm">save</span>
+                Enregistrer les horaires
+            </button>
+        </div>
+    </form>
+{% endblock %}

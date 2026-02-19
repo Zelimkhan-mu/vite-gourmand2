@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Vite & Gourmand{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,line-clamp"></script>
+    <style>.scrollbar-hide::-webkit-scrollbar{display:none}.scrollbar-hide{-ms-overflow-style:none;scrollbar-width:none}</style>
+
+    <style type="text/tailwindcss">
+        @layer base {
+            h1 {
+                @apply font-display font-bold text-4xl md:text-5xl lg:text-7xl text-text-main-light mb-6;
+            }
+            h2 {
+                @apply font-display font-bold text-3xl md:text-4xl text-text-main-light mb-8;
+            }
+            h3 {
+                @apply font-display font-bold text-2xl text-text-main-light mb-4;
+            }
+            p {
+                @apply font-body text-base text-gray-600 leading-relaxed;
+            }
+        }
+
+        @layer components {
+            .btn-primary {
+                @apply bg-primary hover:bg-red-900 text-white font-bold text-sm py-3.5 px-8 rounded-pill shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 inline-block text-center;
+            }
+            .btn-outline {
+                @apply bg-white hover:border-primary hover:text-primary text-text-main-light font-bold text-sm py-3.5 px-8 rounded-pill border border-gray-200 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 inline-block text-center;
+            }
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#800020",
+                        gold: "#D4AF37",
+                        "background-light": "#F0EFED",
+                        "surface-light": "#ffffff",
+                        "text-main-light": "#2C3E50",
+                    },
+                    fontFamily: {
+                        display: ["'Playfair Display'", "serif"],
+                        body: ["'Open Sans'", "sans-serif"],
+                    },
+                    borderRadius: {
+                        '2xl': '1rem',
+                        'pill': '9999px',
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px rgba(0, 0, 0, 0.05)',
+                    }
+                },
+            },
+        };
+    </script>
+
+    {% block javascripts %}
+        {% block importmap %}{{ importmap('app') }}{% endblock %}
+    {% endblock %}
+</head>
+
+<body class="{% block body_class %}bg-background-light text-text-main-light font-body antialiased selection:bg-primary selection:text-white{% endblock %}" {% block body_attributes %}{% endblock %}>
+
+    {% block header %}{% endblock %}
+
+    {% block body %}{% endblock %}
+
+    {% block footer %}
+    <footer class="bg-white pt-20 pb-8 px-6 md:px-12 border-t border-gray-100" id="contact">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-3 gap-12 mb-16">
+                <div class="md:col-span-1">
+                    <div class="flex items-center gap-3 mb-6">
+                        <img src="{{ asset('images/logo.svg') }}" alt="Vite & Gourmand" class="h-8 w-auto">
+                        <span class="font-display font-bold text-lg tracking-wide text-text-main-light uppercase">Vite &amp; Gourmand</span>
+                    </div>
+                    <p class="text-gray-600 text-sm leading-relaxed max-w-xs">
+                        Traiteur événementiel à Bordeaux proposant des saveurs authentiques et des menus de saison pour tous vos moments de partage.
+                    </p>
+                </div>
+                <div class="md:col-span-1">
+                    <h4 class="font-display font-bold text-sm uppercase tracking-widest text-primary mb-6">Horaires</h4>
+                    <div class="space-y-4 text-sm">
+                        {% for horaire in horaires|default([]) %}
+                        <div class="flex justify-between items-center text-gray-600">
+                            <span>{{ horaire.jour|capitalize }}</span>
+                            {% if horaire.closed %}
+                                <span class="font-semibold text-text-main-light">Fermé</span>
+                            {% else %}
+                                <span class="font-semibold text-text-main-light">{{ '%02d'|format(horaire.ouvertureHeure) }}h{{ '%02d'|format(horaire.ouvertureMinutes) }} - {{ '%02d'|format(horaire.fermetureHeure) }}h{{ '%02d'|format(horaire.fermetureMinutes) }}</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="md:col-span-1">
+                    <h4 class="font-display font-bold text-sm uppercase tracking-widest text-primary mb-6">Informations de contact</h4>
+                    <ul class="space-y-4 text-sm">
+                        <li class="flex items-start gap-3 text-gray-600">
+                            <span class="material-icons-outlined text-primary text-lg mt-0.5">location_on</span>
+                            <span>12 Rue des Gourmets,<br>33000 Bordeaux, France</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <span class="material-icons-outlined text-primary text-lg">phone</span>
+                            <a class="hover:text-primary transition-colors" href="tel:0500000000">05 00 00 00 00</a>
+                        </li>
+                        <li class="flex items-center gap-3 text-gray-600">
+                            <span class="material-icons-outlined text-primary text-lg">email</span>
+                            <a class="hover:text-primary transition-colors" href="mailto:contact@viteetgourmand.fr">contact@viteetgourmand.fr</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-400">
+                <p>&copy; {{ "now"|date("Y") }} Vite &amp; Gourmand. Tous droits réservés.</p>
+                <div class="flex gap-6">
+                    <a class="hover:text-primary transition-colors uppercase tracking-wider" href="#">Mentions légales</a>
+                    <a class="hover:text-primary transition-colors uppercase tracking-wider" href="#">Conditions générales de vente</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    {% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,133 @@
+{% extends 'public.html.twig' %}
+
+{% block title %}Vite & Gourmand - Traiteur de saison à Bordeaux{% endblock %}
+
+{% block body %}
+
+{# Hero #}
+<section class="py-24 px-6 md:px-12 bg-background-light text-center">
+    <div class="max-w-4xl mx-auto">
+        <div class="inline-block px-4 py-1.5 border border-primary/20 bg-primary/5 rounded-pill mb-8">
+            <span class="text-xs font-bold tracking-widest uppercase text-primary">25 ans d'excellence</span>
+        </div>
+        <h1>
+            Vite &amp; Gourmand : Votre traiteur de saison à Bordeaux
+        </h1>
+        <p class="text-lg md:text-xl text-gray-500 mb-10 max-w-2xl mx-auto">
+            De vos grandes tablées de fêtes à vos repas quotidiens, savourez une cuisine créative accessible en quelques clics.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{{ path('app_order') }}" class="btn-primary">Commander maintenant</a>
+            <a href="{{ path('app_menus') }}" class="btn-outline">Voir nos menus</a>
+        </div>
+    </div>
+</section>
+
+{# Présentation #}
+<section class="py-20 px-6 md:px-12 bg-white">
+    <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+        <div>
+            <div class="w-12 h-1 bg-gold mb-8"></div>
+            <h2>25 ans d'excellence à Bordeaux</h2>
+            <p class="text-lg text-gray-500 leading-relaxed mb-10">
+                Depuis plus de deux décennies, nous apportons le meilleur des produits du Sud-Ouest dans vos assiettes. Notre engagement : la fraîcheur, la saisonnalité et le plaisir du goût. Chaque plat est une histoire de passion partagée.
+            </p>
+            <div class="grid sm:grid-cols-3 gap-6">
+                <div class="bg-background-light p-6 rounded-2xl text-center border border-gray-100">
+                    <span class="material-icons-outlined text-4xl text-primary mb-3">spa</span>
+                    <h3 class="font-bold text-sm uppercase tracking-wide mb-2">Produits Locaux</h3>
+                    <p class="text-xs text-gray-400">Sélectionnés avec soin</p>
+                </div>
+                <div class="bg-background-light p-6 rounded-2xl text-center border border-gray-100">
+                    <span class="material-icons-outlined text-4xl text-primary mb-3">restaurant</span>
+                    <h3 class="font-bold text-sm uppercase tracking-wide mb-2">Des Plats Frais</h3>
+                    <p class="text-xs text-gray-400">Préparé chaque matin</p>
+                </div>
+                <div class="bg-background-light p-6 rounded-2xl text-center border border-gray-100">
+                    <span class="material-icons-outlined text-4xl text-primary mb-3">verified</span>
+                    <h3 class="font-bold text-sm uppercase tracking-wide mb-2">Depuis 1999</h3>
+                    <p class="text-xs text-gray-400">25 ans de confiance</p>
+                </div>
+            </div>
+        </div>
+        <div class="relative h-[400px] lg:h-[600px] rounded-2xl overflow-hidden shadow-2xl group">
+            <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10"></div>
+            <img src="{{ asset('images/image_presentation.png') }}" alt="Buffet traiteur" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+        </div>
+    </div>
+</section>
+
+<section class="py-24 px-6 md:px-12 bg-background-light" id="menus">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-12">
+            <h2>Nos menus de la semaine</h2>
+            <a href="{{ path('app_menus') }}" class="text-primary font-semibold inline-flex items-center gap-1 hover:gap-2 transition-all">
+                Voir tous nos menus
+                <span class="material-icons-outlined text-sm">arrow_forward</span>
+            </a>
+        </div>
+        <div class="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-8 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 md:pb-0 md:overflow-visible">
+            {% for menu in menus %}
+            <article class="bg-white rounded-2xl overflow-hidden shadow-soft hover:shadow-xl transition-all group min-w-[85vw] sm:min-w-[70vw] md:min-w-0 snap-center">
+                <div class="h-64 overflow-hidden">
+                    {% import 'partials/_macros.html.twig' as macros %}
+                    {% set couverturePath = macros.get_menu_cover_path(menu)|trim %}
+                    
+                    {% if couverturePath %}
+                        <img src="{{ asset('images/' ~ couverturePath) }}" alt="{{ menu.titre }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    {% else %}
+                        <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+                            <span class="material-icons-outlined text-4xl">restaurant_menu</span>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="p-8">
+                    <h3>{{ menu.titre }}</h3>
+                    <p class="text-sm text-gray-500 mb-6">{{ menu.description|length > 120 ? menu.description|slice(0, 120) ~ '…' : menu.description }}</p>
+                    <p class="text-xs uppercase text-gray-400 font-semibold mb-1">À partir de</p>
+                    <div class="flex items-baseline gap-1 mb-6">
+                        <span class="font-display font-bold text-3xl text-primary">{{ menu.basePrice }}€</span>
+                        <span class="text-sm text-gray-400">/pers.</span>
+                    </div>
+                    <a href="{{ path('app_menu_detail', {'id': menu.id}) }}" class="btn-primary block w-full">Voir le menu</a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{# Témoignages #}
+<section class="py-24 px-6 md:px-12 bg-white relative overflow-hidden">
+    <div class="absolute top-0 right-0 w-64 h-64 bg-background-light rounded-full translate-x-1/2 -translate-y-1/2 opacity-50"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 bg-background-light rounded-full -translate-x-1/2 translate-y-1/2 opacity-50"></div>
+    <div class="max-w-7xl mx-auto relative z-10">
+        <h2>Nos clients témoignent</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+            {% for review in reviews %}
+            <div class="bg-white border border-gray-100 p-8 pt-12 rounded-2xl shadow-soft relative">
+                <div class="absolute -top-5 left-8 w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-serif text-2xl shadow-lg">"</div>
+                <div class="flex text-gold text-sm mb-4 gap-0.5">
+                    {% for i in 1..5 %}
+                        {% if i <= review.rating %}
+                            <span class="material-icons-outlined text-sm">star</span>
+                        {% else %}
+                            <span class="material-icons-outlined text-sm">star_border</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <p class="text-sm text-gray-500 italic leading-relaxed mb-8">"{{ review.commentaire }}"</p>
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-sm">{{ review.user.firstName|first }}</div>
+                    <div>
+                        <h4 class="font-bold text-sm">{{ review.user.firstName }} {{ review.user.lastName|first }}.</h4>
+                        <p class="text-xs text-gray-400">Client vérifié</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}

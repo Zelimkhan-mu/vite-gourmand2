@@ -1,0 +1,148 @@
+{% extends 'dashboard_user/base.html.twig' %}
+
+{% block title %}Commande #VG-{{ commande.id }} - Vite & Gourmand{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="{ showModal: false }">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <a href="{{ path('app_orders') }}" class="text-gray-400 hover:text-primary transition-colors">
+                    <span class="material-icons-outlined text-2xl">arrow_back</span>
+                </a>
+                <h2>Commande #VG-{{ commande.id }}</h2>
+            </div>
+            <p class="text-gray-500 ml-9">Passée le {{ commande.createdAt|date('d M Y') }}</p>
+        </div>
+        
+        <div class="ml-9 md:ml-0">
+            {% import 'partials/_macros.html.twig' as macros %}
+            {{ macros.badge_statut_commande(commande.statutCommande) }}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div class="lg:col-span-2 space-y-8">
+            
+            <div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100">
+                <h3>
+                    <span class="material-icons-outlined text-primary">local_shipping</span>
+                    Livraison
+                </h3>
+                <div class="space-y-2 text-gray-700">
+                    <p class="font-semibold text-lg">{{ commande.adresseLivraison }}</p>
+                    <p>{{ commande.codePostalLivraison }} {{ commande.villeLivraison }}</p>
+                    <div class="pt-2 mt-2 border-t border-gray-50">
+                        <p class="text-gray-500">Prévue le <span class="font-semibold text-primary">{{ commande.dateLivraison|date('d M Y') }}</span> à <span class="font-semibold text-primary">{{ commande.heureLivraison|date('H:i') }}</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
+                <div class="bg-gray-50/50 px-6 py-4 border-b border-gray-100">
+                    <h3>Détail du Menu</h3>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-start gap-6 pb-6 border-b border-gray-100">
+                        <div class="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 shadow-sm">
+                            <img src="{{ asset('images/menu_placeholder.jpg') }}" alt="{{ commande.menu.titre }}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-xl text-text-main-light mb-1">{{ commande.menu.titre }}</h4>
+                            <p class="text-gray-500 mb-2">Formule pour {{ commande.numPersons }} personne{{ commande.numPersons > 1 ? 's' : '' }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-xl text-primary">{{ commande.prixMenu }} €</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3 pt-4">
+                        <div class="flex justify-between items-center text-gray-600">
+                            <span>Frais de livraison</span>
+                            <span class="font-medium">{{ commande.fraisLivraison }} €</span>
+                        </div>
+
+                        {% if commande.discount > 0 %}
+                            <div class="flex justify-between items-center text-green-600">
+                                <span>Remise volume</span>
+                                <span class="font-medium">-{{ commande.discount }} €</span>
+                            </div>
+                        {% endif %}
+
+                        <div class="pt-4 mt-2 border-t border-gray-100 flex justify-between items-end">
+                            <span class="text-sm text-gray-400 uppercase tracking-wider font-semibold">Total TTC</span>
+                            <span class="text-3xl font-display font-bold text-primary">{{ commande.prixTotal }} €</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if commande.statutCommande == 'EN_ATTENTE' %}
+                <div class="flex justify-end pt-2">
+                    <button @click="showModal = true" class="px-6 py-3 border border-red-200 text-red-600 font-semibold rounded-xl hover:bg-red-50 hover:border-red-300 transition-all flex items-center gap-2">
+                        <span class="material-icons-outlined">cancel</span>
+                        Annuler la commande
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="space-y-8">
+            <div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100">
+                <h3>Historique</h3>
+                <div class="relative pl-6 border-l-2 border-gray-100 space-y-8">
+                    
+                    {% for history in historique %}
+                        {% set isLatest = loop.first %}
+                        <div class="relative">                            
+                            <p class="font-semibold text-base {{ isLatest ? 'text-text-main-light' : 'text-gray-400' }}">
+                                {{ history.statut|replace({'_': ' '})|capitalize }}
+                            </p>
+                            
+                            <p class="text-sm mt-0.5 {{ isLatest ? 'text-gray-500' : 'text-gray-300' }}">
+                                {{ history.createdAt|date('d M Y à H:i') }}
+                            </p>
+                        </div>
+                    {% else %}
+                         <div class="relative">
+                            <p class="font-semibold text-text-main-light text-base">Commande créée</p>
+                            <p class="text-sm text-gray-500 mt-0.5">{{ commande.createdAt|date('d M Y à H:i') }}</p>
+                        </div>
+                    {% endfor %}
+                    
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div x-show="showModal" style="display: none;" x-cloak
+         class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+         @keydown.escape.window="showModal = false">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8 text-center"
+             @click.outside="showModal = false">
+            <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-icons-outlined text-red-500 text-2xl">warning</span>
+            </div>
+            <h3 class="font-display font-bold text-xl text-text-main-light mb-2">Annuler la commande ?</h3>
+            <p class="text-sm text-gray-500 mb-6">
+                Êtes-vous sûr de vouloir annuler cette commande ? Cette action est irréversible.
+            </p>
+            <div class="flex gap-3 justify-center">
+                <button type="button" @click="showModal = false"
+                        class="px-6 py-2.5 rounded-full border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors">
+                    Non, retour
+                </button>
+                <form method="post" action="{{ path('app_order_cancel', {'id': commande.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ commande.id) }}">
+                    <button type="submit"
+                            class="px-6 py-2.5 rounded-full bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-colors">
+                        Oui, annuler
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

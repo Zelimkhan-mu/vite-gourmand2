@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion - Vite & Gourmand{% endblock %}
+
+{% block header %}
+<nav class="sticky top-0 z-50 bg-white shadow-sm py-4 px-6 md:px-12 transition-colors duration-300">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <a class="flex items-center gap-3 group" href="{{ path('app_home') }}">
+            <div class="w-10 h-10 bg-primary flex items-center justify-center rounded-sm text-white font-display font-bold text-xl group-hover:scale-105 transition-transform">VG</div>
+            <span class="font-display font-bold text-xl tracking-wide text-text-main-light uppercase">Vite & Gourmand</span>
+        </a>
+        <div class="hidden md:flex items-center gap-8">
+            <a class="text-sm font-semibold hover:text-primary transition-colors" href="{{ path('app_home') }}">Retour à l'accueil</a>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block footer %}
+<footer class="py-6 text-center text-xs text-gray-400">
+    <p>© {{ 'now'|date('Y') }} Vite & Gourmand. Tous droits réservés.</p>
+</footer>
+{% endblock %}
+
+{% block body %}
+<main class="flex-grow flex items-center justify-center p-6 relative min-h-[80vh]">
+
+    <div class="bg-white rounded-2xl shadow-soft w-full max-w-md p-8 md:p-12 relative z-10">
+        <div class="text-center mb-8">
+            <div class="w-12 h-12 bg-primary flex items-center justify-center rounded-sm text-white font-display font-bold text-2xl mx-auto mb-6">VG</div>
+            <h1 class="font-display font-bold text-3xl text-text-main-light mb-2">Connexion à votre compte</h1>
+            <p class="text-gray-500 text-sm">Entrez vos identifiants pour commander vos menus</p>
+        </div>
+
+        {% if error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline">{{ error.messageKey|trans(error.messageData, 'security') }}</span>
+            </div>
+        {% endif %}
+
+        {% if app.user %}
+            <div class="mb-3">
+                Vous êtes connecté en tant que {{ app.user.userIdentifier }}, <a href="{{ path('app_logout') }}">Se déconnecter</a>
+            </div>
+        {% endif %}
+
+        <form method="post">
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2" for="username">Adresse email</label>
+                    <input type="email" value="" name="_username" id="username" class="w-full px-4 py-3 rounded-lg border-gray-300 focus:border-primary focus:ring-primary text-sm placeholder-gray-400" autocomplete="email" required autofocus placeholder="exemple@email.com">
+                </div>
+                
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-semibold text-gray-700" for="password">Mot de passe</label>
+                        <a class="text-xs text-primary font-semibold hover:underline" href="{{ path('app_forgot_password_request') }}">Mot de passe oublié ?</a>
+                    </div>
+                    <input type="password" name="_password" id="password" class="w-full px-4 py-3 rounded-lg border-gray-300 focus:border-primary focus:ring-primary text-sm placeholder-gray-400" autocomplete="current-password" required placeholder="••••••••">
+                </div>
+
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                <button class="w-full bg-primary hover:bg-red-900 text-white font-bold py-3.5 px-6 rounded-pill shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 text-center" type="submit">
+                    Se connecter
+                </button>
+            </div>
+        </form>
+
+        <div class="mt-10 text-center text-sm">
+            <span class="text-gray-500">Pas encore de compte ?</span>
+            <a class="font-semibold text-primary hover:text-red-900 ml-1 transition-colors" href="{{ path('app_register') }}">Créer un compte</a>
+        </div>
+    </div>
+</main>
+{% endblock %}

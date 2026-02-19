@@ -1,0 +1,83 @@
+{% extends 'dashboard_admin/base.html.twig' %}
+
+{% block title %}Gestion des Commandes - Administration{% endblock %}
+{% block page_title %}Gestion des Commandes{% endblock %}
+
+{% block admin_content %}
+    <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-hide no-scrollbar md:bg-white md:p-2 md:rounded-xl md:shadow-sm md:border md:border-gray-100 md:w-fit md:pb-2">
+        {% for label in ['Toutes', 'En attente', 'En cours', 'Livrées', 'Annulées'] %}
+            {% set isActive = (currentFilter == label) %}
+            
+            <a href="{{ path('admin_orders_list', {'status': label}) }}" 
+               class="px-5 py-2 whitespace-nowrap text-sm font-medium transition-colors
+                      {{ isActive 
+                         ? 'bg-primary text-white font-semibold shadow-sm' 
+                         : 'bg-white text-gray-500 md:bg-transparent' }}
+                      rounded-full md:rounded-lg">
+                {{ label }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <div class="space-y-6">
+        {% for commande in commandes %}
+            
+            <div class="bg-white rounded-2xl shadow-soft p-5 md:p-6 border border-gray-100 hover:border-primary/20 transition-all duration-300">
+                
+                <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+                    <div class="flex flex-col md:flex-row md:items-center md:gap-4">
+                        <span class="text-base md:text-lg font-bold text-text-main-light">#VG-{{ commande.id }}</span>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] text-gray-400">Commandé le {{ commande.createdAt|date('d/m/Y') }}</span>
+                            <span class="text-xs font-semibold text-primary">Client : {{ commande.user.firstname }} {{ commande.user.lastname }}</span>
+                        </div>
+                    </div>
+
+                    {% import 'partials/_macros.html.twig' as macros %}
+                    {{ macros.badge_statut_commande(commande.statutCommande) }}
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    
+                    <div class="flex items-center gap-4">
+                        <div class="w-20 h-20 md:w-16 md:h-16 rounded-xl border md:border-2 border-gray-100 md:border-white shadow-sm overflow-hidden flex-shrink-0">
+                            <img src="{{ asset('images/menu_placeholder.jpg') }}" alt="{{ commande.menu.titre }}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex flex-col flex-1 min-w-0 gap-2">
+                            <div>
+                                <span class="font-semibold text-text-main-light text-base block leading-tight">{{ commande.menu.titre }}</span>
+                                <span class="text-xs text-gray-500">Formule {{ commande.numPersons }} pers.</span>
+                            </div>
+                            <div class="border-l-2 border-primary/20 pl-3">
+                                <span class="text-[11px] font-bold text-primary uppercase tracking-wider block">
+                                    Livraison le {{ commande.dateLivraison|date('d/m/Y') }} à {{ commande.heureLivraison|date('H:i') }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col items-end justify-center pt-2 md:pt-0 border-t border-gray-50 md:border-0">
+                        <div class="mb-3 md:mb-3">
+                            <p class="text-sm text-gray-500 mb-0.5 hidden md:block text-right">Total TTC</p>
+                            <span class="text-2xl font-display font-bold text-text-main-light">{{ commande.prixTotal }}€</span>
+                        </div>
+                        
+                        <div class="flex items-center">
+                       <a class="text-sm font-semibold text-primary hover:text-red-900 transition-colors flex items-center gap-1 group" href="{{ path('admin_order_show', {'id': commande.id}) }}">
+                                Voir la commande
+                                <span class="material-icons-outlined text-base transition-transform group-hover:translate-x-1">arrow_forward</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="text-center py-12 text-gray-500">
+                <span class="material-icons-outlined text-4xl mb-2 block">shopping_bag</span>
+                <p>Aucune commande trouvée.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+
+{% endblock %}

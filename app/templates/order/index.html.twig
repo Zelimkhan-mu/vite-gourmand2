@@ -1,0 +1,298 @@
+{% extends 'base.html.twig' %}
+
+{% block header %}
+<nav class="bg-white shadow-sm py-4 px-6 md:px-12">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <a class="flex items-center gap-3" href="{{ path('app_home') }}">
+            <img src="{{ asset('images/logo.svg') }}" alt="Vite & Gourmand" class="h-10 w-auto">
+            <span class="font-display font-bold text-xl tracking-wide uppercase">Vite &amp; Gourmand</span>
+        </a>
+    </div>
+</nav>
+{% endblock %}
+
+{% block title %}Vite & Gourmand - Passez commande{% endblock %}
+
+{% block body %}
+<main class="flex-grow py-12 px-4 sm:px-6 md:px-12 flex items-center justify-center">
+    <div class="max-w-3xl w-full">
+        <div class="text-center mb-10">
+            <h1>Passez commande</h1>
+            <p>Remplissez le formulaire ci-dessous pour valider votre repas.</p>
+        </div>
+
+        <div class="bg-white  rounded-2xl shadow-soft p-8 md:p-12">
+            <form action="#" class="space-y-10" method="POST">
+                
+                <section>
+                    <div class="flex items-center gap-4 mb-6">
+                        <span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">1</span>
+                        <h2 class="border-b-2 border-gold/30 pb-1 pr-6 inline-block mb-0">Identité</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 " for="lastname">Nom</label>
+                            <input class="w-full border-gray-200  focus:ring-primary focus:border-primary shadow-sm py-3 px-4" 
+                                   id="lastname" name="lastname" placeholder="Votre nom" required type="text"
+                                   value="{{ app.user ? app.user.nom : '' }}">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 " for="firstname">Prénom</label>
+                            <input class="w-full border-gray-200  focus:ring-primary focus:border-primary shadow-sm py-3 px-4" 
+                                   id="firstname" name="firstname" placeholder="Votre prénom" required type="text"
+                                   value="{{ app.user ? app.user.prenom : '' }}">
+                        </div>
+                        <div class="space-y-2 md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 " for="phone">Numéro de téléphone</label>
+                            <input class="w-full border-gray-200  focus:ring-primary focus:border-primary shadow-sm py-3 px-4" 
+                                   id="phone" name="phone" placeholder="06 00 00 00 00" required type="tel"
+                                   value="{{ app.user ? app.user.telephone : '' }}">
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="flex items-center gap-4 mb-6">
+                        <span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">2</span>
+                        <h2 class="border-b-2 border-gold/30 pb-1 pr-6 inline-block mb-0">Livraison</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2 md:col-span-2">
+                            <label class="block text-sm font-semibold text-gray-700 " for="delivery-address">Adresse postale</label>
+                            <input class="w-full border-gray-200  focus:ring-primary focus:border-primary shadow-sm py-3 px-4" 
+                                   id="delivery-address" name="address" placeholder="Ex: 12 rue des Gourmets" required type="text"
+                                   value="{{ app.user ? app.user.adresse : '' }}">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 " for="delivery-zipcode">Code postal</label>
+                            <input class="w-full border-gray-200  focus:ring-primary focus:border-primary shadow-sm py-3 px-4" 
+                                   id="delivery-zipcode" name="zipcode" placeholder="33000" required type="text"
+                                   value="{{ app.user ? app.user.codePostal : '' }}">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 " for="delivery-city">Ville</label>
+                            <input class="w-full border-gray-200  focus:ring-primary focus:border-primary shadow-sm py-3 px-4" 
+                                   id="delivery-city" name="city" placeholder="Bordeaux" required type="text"
+                                   value="{{ app.user ? app.user.ville : '' }}">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 " for="delivery-date">Date de prestation souhaitée</label>
+                            <input class="w-full border-gray-200  focus:ring-primary focus:border-primary shadow-sm py-3 px-4" id="delivery-date" name="delivery_date" 
+                                   onblur="if(!this.value)this.type='text'" onfocus="(this.type='date')" placeholder="dd/mm/yyyy" required type="text">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700 " for="delivery-time">Heure souhaitée de livraison</label>
+                            <input class="w-full border-gray-200 focus:ring-primary focus:border-primary shadow-sm py-3 px-4" id="delivery-time" name="delivery_time" required type="time">
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="flex items-center gap-4 mb-6">
+                        <span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">3</span>
+                        <h2 class="border-b-2 border-gold/30 pb-1 pr-6 inline-block mb-0">Choix du menu</h2>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="space-y-2 relative">
+                            <label class="block text-sm font-semibold text-gray-700">Sélectionnez votre menu</label>
+                            
+                            <!-- Input caché pour stocker l'ID du menu sélectionné -->
+                            <input type="hidden" name="menu_id" id="menu-id" value="{{ selectedMenu ? selectedMenu.id : '' }}">
+                            <input type="hidden" id="selected-price" value="{{ selectedMenu ? selectedMenu.basePrice : '0' }}">
+
+                            <!-- Custom Dropdown Trigger -->
+                            <div id="dropdown-trigger" class="relative w-full z-20">
+                                <div class="w-full border border-gray-200 bg-white rounded-lg py-4 pl-4 pr-10 text-lg font-display text-text-main-light cursor-pointer flex items-center justify-between hover:border-primary transition-colors">
+                                    <span id="dropdown-label">
+                                        {% if selectedMenu %}
+                                            {{ selectedMenu.titre }} - {{ selectedMenu.basePrice }}€
+                                        {% else %}
+                                            Choisir un menu...
+                                        {% endif %}
+                                    </span>
+                                    <span class="material-icons-outlined text-2xl text-primary transform transition-transform" id="dropdown-arrow">expand_more</span>
+                                </div>
+
+                                <!-- Custom Dropdown Content (Hidden by default) -->
+                                <div id="dropdown-content" class="hidden absolute top-full left-0 right-0 bg-white border border-t-0 border-gray-200 rounded-b-lg shadow-xl max-h-[400px] overflow-y-auto z-50 mt-1">
+                                    {% for menu in menus %}
+                                    <div class="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-200 transition-colors group menu-option"
+                                         data-id="{{ menu.id }}"
+                                         data-name="{{ menu.titre }}"
+                                         data-price="{{ menu.basePrice }}"
+                                         data-min="{{ menu.minPersons }}">
+                                        
+                                        <div class="flex justify-between items-start mb-1">
+                                            <h3 class="font-display font-bold text-lg text-text-main-light group-hover:text-primary transition-colors mb-0">{{ menu.titre }}</h3>
+                                            <span class="font-display font-bold text-primary text-lg">{{ menu.basePrice }} €</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mb-2 leading-relaxed line-clamp-2">{{ menu.description }}</p>
+                                        <div class="flex justify-end">
+                                            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Min. {{ menu.minPersons }} pers.</span>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700" for="people-count">
+                                Nombre de personnes <span class="font-normal text-gray-500" id="min-persons-label">(minimum {{ selectedMenu ? selectedMenu.minPersons : '1' }})</span>
+                            </label>
+                            <input class="w-full border-gray-200 rounded-lg focus:ring-primary focus:border-primary shadow-sm py-3 px-4" 
+                                   id="people-count" name="people_count" required type="number" 
+                                   value="{{ selectedMenu ? selectedMenu.minPersons : '1' }}" 
+                                   min="{{ selectedMenu ? selectedMenu.minPersons : '1' }}">
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <div class="flex items-center gap-4 mb-6">
+                        <span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">4</span>
+                        <h2 class="border-b-2 border-gold/30 pb-1 pr-6 inline-block mb-0">Récapitulatif du prix</h2>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center text-sm text-gray-600">
+                                <span>Prix du menu (<span id="recap-count">0</span> pers.)</span>
+                                <span class="font-medium text-gray-900" id="price-menu">-- €</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm text-gray-600">
+                                <span>Frais de livraison</span>
+                                <span class="font-medium text-gray-900">5,00 €</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm text-gray-600">
+                                <span>Dont TVA (20%)</span>
+                                <span class="font-medium text-gray-900" id="price-tva">-- €</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm text-primary font-bold hidden" id="discount-line">
+                                <span>Réduction (-10%)</span>
+                                <span id="price-discount">-- €</span>
+                            </div>
+                        </div>
+                        <div class="my-4 border-t border-gray-200"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-display font-bold text-xl text-primary">Total</span>
+                            <span class="font-display font-bold text-xl text-primary" id="price-total">-- €</span>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="pt-6 border-t border-gray-200 flex flex-col-reverse sm:flex-row items-center justify-end gap-4">
+                    <button class="w-full sm:w-auto px-8 py-3 rounded-pill border border-gray-200 text-text-main-light font-semibold hover:bg-gray-50 transition-colors" type="button">
+                        Annuler
+                    </button>
+                    <button class="w-full sm:w-auto px-10 py-3 rounded-pill bg-primary hover:bg-red-900 text-white font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed" id="submit-btn" type="submit">
+                        Commander
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<script>
+//ekh... je crois que je préfère le back. 
+document.addEventListener('DOMContentLoaded', function() {
+    const trigger = document.getElementById('dropdown-trigger');
+    const content = document.getElementById('dropdown-content');
+    const label = document.getElementById('dropdown-label');
+    const menuOptions = document.querySelectorAll('.menu-option');
+    const menuId = document.getElementById('menu-id');
+    const menuPrice = document.getElementById('selected-price');
+    
+    const peopleInput = document.getElementById('people-count');
+    const minPersonsLabel = document.getElementById('min-persons-label');
+    const recapCount = document.getElementById('recap-count'); //C'est juste un valeur dynamique du nbre de personnes dans le récap
+    
+    const priceMenuDisplay = document.getElementById('price-menu');
+    const priceTvaDisplay = document.getElementById('price-tva');
+    const priceTotalDisplay = document.getElementById('price-total');
+    const submitBtn = document.getElementById('submit-btn');
+    const discountLine = document.getElementById('discount-line');
+    const priceDiscountDisplay = document.getElementById('price-discount');
+
+    trigger.addEventListener('click', () => {
+        content.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!trigger.contains(e.target)) {
+            content.classList.add('hidden');
+        }
+    });
+
+    menuOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const name = this.dataset.name;
+            const price = parseFloat(this.dataset.price);
+            const min = parseInt(this.dataset.min);
+
+            label.textContent = `${name} - ${price.toFixed(2)}€`;
+            menuId.value = id;
+            menuPrice.value = price;
+
+            peopleInput.min = min;
+            if (parseInt(peopleInput.value) < min) {
+                peopleInput.value = min;
+            }
+            minPersonsLabel.textContent = `(minimum ${min})`;
+
+            content.classList.add('hidden');
+
+            updatePrices();
+        });
+    });
+
+    peopleInput.addEventListener('input', updatePrices);
+
+    function updatePrices() {
+        const price = parseFloat(menuPrice.value) || 0;
+        const count = parseInt(peopleInput.value) || 0;
+        const minCount = parseInt(peopleInput.min) || 1;
+        const deliveryFee = 5.00;
+
+        if (price === 0) {
+            priceMenuDisplay.textContent = "-- €";
+            priceTvaDisplay.textContent = "-- €";
+            priceTotalDisplay.textContent = "-- €";
+            submitBtn.disabled = true;
+            discountLine.classList.add('hidden'); 
+            return;
+        }
+
+        let menuTotal = price * count;
+        let discountAmount = 0;
+
+        if (count > (minCount + 5)) {
+            discountAmount = menuTotal * 0.10;
+            menuTotal = menuTotal - discountAmount;
+            
+            discountLine.classList.remove('hidden');
+            priceDiscountDisplay.textContent = "- " + discountAmount.toFixed(2) + " €";
+        } else {
+            discountLine.classList.add('hidden');
+        }
+
+        const total = menuTotal + deliveryFee;  
+        const tva = total - (total / 1.2); 
+
+        recapCount.textContent = count;
+        priceMenuDisplay.textContent = menuTotal.toFixed(2) + " €";
+        priceTvaDisplay.textContent = tva.toFixed(2) + " €";
+        priceTotalDisplay.textContent = total.toFixed(2) + " €";
+        
+        submitBtn.disabled = false;
+    }
+
+    // si menu pré-sélectionné, ça lance tout 
+    if (menuId.value) {
+        updatePrices();
+    }
+});
+</script>
+{% endblock %}
