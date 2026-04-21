@@ -114,7 +114,7 @@ class OrderController extends AbstractController
             ->from(new Address('no-reply@vite-et-gourmand.fr'))
             ->to($this->getUser()->getEmail())
             ->subject('Confirmation de votre commande')
-            ->html($this->renderView('emails/order_confirmation.html.twig', ['commande' => $commande]));
+            ->htmlTemplate('emails/order_confirmation.html.twig', ['commande' => $commande]);
 
         $mailer->send($email);
 
