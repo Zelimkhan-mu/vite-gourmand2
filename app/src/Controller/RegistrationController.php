@@ -11,7 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Mime\Address;
 
 class RegistrationController extends AbstractController
 {
@@ -36,12 +37,17 @@ class RegistrationController extends AbstractController
             $entityManager->persist($user);
             $entityManager->flush();
 
-            $email = (new Email())
-                ->from('noreply@vite-et-gourmand.fr')
+            $email = (new TemplatedEmail())
+                ->from(new Address('noreply@vite-et-gourmand.fr', 'Vite & Gourmand'))
                 ->to($user->getEmail())
                 ->subject('Bienvenue chez Vite & Gourmand !')
-                ->html('<p>Bonjour ' . $user->getFirstName() . ', merci d\'avoir rejoint l\'aventure !</p>');
+                ->htmlTemplate('emails/mail_bienvenue.html.twig')
+                ->context([
+                    'user' => $user,
+                ]);
             $mailer->send($email);
+
+
             $this->addFlash('success', 'Votre compte a été créé ! Un e-mail de bienvenue vous a été envoyé.');
             return $this->redirectToRoute('app_home');
         }
