@@ -16,28 +16,35 @@ class MenuRepository extends ServiceEntityRepository
         parent::__construct($registry, Menu::class);
     }
 
-    //    /**
-//     * @return Menu[] Returns an array of Menu objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('m')
-//            ->andWhere('m.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('m.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    public function findByFilters(?string $maxPrice, ?string $minPrice, array $themeIds, array $regimeIds, ?string $minPersons): array
+    {
+        $qb = $this->createQueryBuilder('m');
 
-    //    public function findOneBySomeField($value): ?Menu
-//    {
-//        return $this->createQueryBuilder('m')
-//            ->andWhere('m.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+        if ($maxPrice !== null && $maxPrice !== '') {
+            $qb->andWhere('m.basePrice <= :maxPrice')
+                ->setParameter('maxPrice', $maxPrice);
+        }
+
+        if ($minPrice !== null && $minPrice !== '') {
+            $qb->andWhere('m.basePrice >= :minPrice')
+                ->setParameter('minPrice', $minPrice);
+        }
+
+        if (!empty($themeIds)) {
+            $qb->andWhere('m.theme IN (:themeIds)')
+                ->setParameter('themeIds', $themeIds);
+        }
+
+        if (!empty($regimeIds)) {
+            $qb->andWhere('m.regime IN (:regimeIds)')
+                ->setParameter('regimeIds', $regimeIds);
+        }
+
+        if ($minPersons !== null && $minPersons !== '') {
+            $qb->andWhere('m.minPersons >= :minPersons')
+                ->setParameter('minPersons', $minPersons);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }
