@@ -10,6 +10,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\StatutCommandeHistorique;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\Review;
+use App\Repository\ReviewRepository;
 
 class DashboardOrderController extends AbstractController
 {
@@ -42,9 +44,9 @@ class DashboardOrderController extends AbstractController
             'currentFilter' => $status ?: 'Toutes'
         ]);
     }
-
+    
     #[Route('/mes-commandes/{id}', name: 'app_order_show', methods: ['GET'])]
-    public function show(Commande $commande): Response
+    public function show(Commande $commande, ReviewRepository $reviewRepo): Response
     {
         $user = $this->getUser();
 
@@ -57,11 +59,55 @@ class DashboardOrderController extends AbstractController
             return $b->getCreatedAt() <=> $a->getCreatedAt();
         });
 
+        $review = $reviewRepo->findOneBy(['commande' => $commande]);
+
         return $this->render('dashboard_user/order/popup.html.twig', [
             'commande' => $commande,
-            'historique' => $historique
+            'historique' => $historique,
+            'review' => $review
         ]);
     }
+
+    #[Route('/mes-commandes/{id}/avis', name: 'app_order_review', methods: ['POST'])]
+    public function review(Commande $commande, Request $request, EntityManagerInterface $em, ReviewRepository $reviewRepo): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user || $commande->getUser() !== $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($commande->getStatutCommande() !== 'TERMINEE') {
+            throw $this->createAccessDeniedException("Cette commande n'est pas encore terminée.");
+        }
+
+        if ($reviewRepo->findOneBy(['commande' => $commande])) {
+            $this->addFlash('warning', 'Vous avez déjà donné votre avis pour cette commande.');
+            return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
+        }
+
+        $rating = (int) $request->request->get('rating');
+        $commentaire = trim($request->request->get('commentaire', ''));
+
+        if ($rating < 1 || $rating > 5 || $commentaire === '') {
+            $this->addFlash('error', 'Veuillez remplir tous les champs.');
+            return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
+        }
+
+        $review = new Review();
+        $review->setCommande($commande);
+        $review->setUser($user);
+        $review->setRating($rating);
+        $review->setCommentaire($commentaire);
+
+        $em->persist($review);
+        $em->flush();
+
+        $this->addFlash('success', 'Votre avis a bien été envoyé, merci !');
+        return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
+    }
+
+
 
     #[Route('/mes-commandes/{id}/annuler', name: 'app_order_cancel', methods: ['POST'])]
     public function cancel(Request $request, Commande $commande, EntityManagerInterface $em): Response
