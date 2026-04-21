@@ -67,12 +67,12 @@ class AdminDashboardController extends AbstractController
     }
 
     #[Route('/commandes/{id}', name: 'admin_order_show', methods: ['GET', 'POST'])]
-    public function show(Commande $commande, Request $request, EntityManagerInterface $em, MenuRepository $menuRepo): Response
+    public function show(Commande $commande, Request $request, EntityManagerInterface $em, MenuRepository $menuRepo, MailerInterface $mailer): Response
     {
         if ($request->isMethod('POST')) {
             $newStatus = $request->request->get('statut');
 
-            $allowedStatuses = ['EN_ATTENTE', 'EN_PREPARATION', 'EN_LIVRAISON', 'LIVREE', 'TERMINEE'];
+            $allowedStatuses = ['EN_ATTENTE', 'EN_PREPARATION', 'EN_LIVRAISON', 'LIVREE','ATTENTE_RETOUR_MATERIEL', 'TERMINEE'];
 
             if (in_array($newStatus, $allowedStatuses) && $newStatus !== $commande->getStatutCommande()) {
                 $commande->setStatutCommande($newStatus);
@@ -86,6 +86,35 @@ class AdminDashboardController extends AbstractController
                 $em->persist($history);
                 $em->flush();
 
+                if ($newStatus === 'ATTENTE_RETOUR_MATERIEL') {
+                    try {
+                        $emailMessage = (new TemplatedEmail())
+                            ->from(new Address('no-reply@viteetgourmand.fr', 'Vite & Gourmand'))
+                            ->to($commande->getUser()->getEmail())
+                            ->subject('Important : Matériel à restituer')
+                            ->htmlTemplate('emails/attente_retour_materiel.html.twig')
+                            ->context([
+                                'commande' => $commande,
+                            ]);
+
+                        $mailer->send($emailMessage);
+                        $this->addFlash('info', 'L\'email demandant la restitution sous 10 jours ouvrés a été envoyé au client.');
+                    } catch (\Exception $e) {
+                        $this->addFlash('warning', 'Le statut a été mis à jour, mais une erreur est survenue lors de l\'envoi de l\'email : ' . $e->getMessage());
+                    }
+                }
+
+                if ($newStatus === 'TERMINEE') {
+                    $emailMessage = (new TemplatedEmail())
+                        ->from(new Address('no-reply@viteetgourmand.fr'))
+                        ->to($commande->getUser()->getEmail())
+                        ->subject('Votre commande est terminée - Donnez votre avis !')
+                        ->htmlTemplate('emails/commande_terminee.html.twig')
+                        ->context(['commande' => $commande]);
+
+                    $mailer->send($emailMessage);
+
+                }
             }
 
             return $this->redirectToRoute('admin_order_show', ['id' => $commande->getId()]);

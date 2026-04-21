@@ -126,6 +126,7 @@ class ResetPasswordController extends AbstractController
 
         $email = (new Email())
             ->from('noreply@vite-et-gourmand.fr')
+            ->to($user->getEmail())
             ->subject('Votre demande de réinitialisation de mot de passe')
             ->html(
                 $this->renderView('reset_password/email.html.twig', [

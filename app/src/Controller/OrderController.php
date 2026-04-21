@@ -9,6 +9,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Mime\Address;
 
 class OrderController extends AbstractController
 {
@@ -73,7 +76,7 @@ class OrderController extends AbstractController
     }
 
     #[Route('/commande/creer', name: 'app_order_create', methods: ['POST'])]
-    public function create(Request $request, MenuRepository $menuRepo, EntityManagerInterface $em): Response
+    public function create(Request $request, MenuRepository $menuRepo, EntityManagerInterface $em, MailerInterface $mailer): Response
     {
         $session = $request->getSession();
         $orderData = $session->get('order_data');
@@ -106,6 +109,14 @@ class OrderController extends AbstractController
         $em->flush();
 
         $session->remove('order_data');
+
+        $email = (new TemplatedEmail())
+            ->from(new Address('no-reply@vite-et-gourmand.fr'))
+            ->to($this->getUser()->getEmail())
+            ->subject('Confirmation de votre commande')
+            ->html($this->renderView('emails/order_confirmation.html.twig', ['commande' => $commande]));
+
+        $mailer->send($email);
 
         return $this->redirectToRoute('app_order_confirmation', ['id' => $commande->getId()]);
     }
