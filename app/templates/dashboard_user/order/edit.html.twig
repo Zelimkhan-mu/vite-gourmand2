@@ -1,0 +1,74 @@
+{% extends 'dashboard_user/base.html.twig' %}
+
+{% block title %}Modifier la commande #VG-{{ commande.id }} - Vite & Gourmand{% endblock %}
+
+{% block dashboard_content %}
+<div class="max-w-2xl mx-auto">
+
+    <div class="flex items-center gap-3 mb-8">
+        <a href="{{ path('app_order_show', {'id': commande.id}) }}" class="text-gray-400 hover:text-primary transition-colors">
+            <span class="material-icons-outlined text-2xl">arrow_back</span>
+        </a>
+        <h2>Modifier la commande #VG-{{ commande.id }}</h2>
+    </div>
+
+    <div class="bg-white p-8 rounded-2xl shadow-soft border border-gray-100 mb-6">
+        <p class="text-sm text-gray-500 mb-1">Menu sélectionné (non modifiable)</p>
+        <p class="font-bold text-lg text-text-main-light">{{ commande.menu.titre }}</p>
+    </div>
+
+    <form method="post" action="{{ path('app_order_edit_save', {'id': commande.id}) }}" class="bg-white p-8 rounded-2xl shadow-soft border border-gray-100 space-y-6">
+        <input type="hidden" name="_token" value="{{ csrf_token('edit' ~ commande.id) }}">
+
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Adresse de livraison</label>
+            <input type="text" name="address" value="{{ commande.adresseLivraison }}" required
+                   class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-primary">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Code postal</label>
+                <input type="text" name="zipcode" value="{{ commande.codePostalLivraison }}" required
+                       class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-primary">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Ville</label>
+                <input type="text" name="city" value="{{ commande.villeLivraison }}" required
+                       class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-primary">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Date de livraison</label>
+                <input type="date" name="delivery_date" value="{{ commande.dateLivraison|date('Y-m-d') }}" required
+                       class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-primary">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Heure de livraison</label>
+                <input type="time" name="delivery_time" value="{{ commande.heureLivraison|date('H:i') }}" required
+                       class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-primary">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Nombre de personnes</label>
+            <input type="number" name="people_count" value="{{ commande.numPersons }}" min="{{ commande.menu.minPersons }}" required
+                   class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-primary">
+            <p class="text-xs text-gray-400 mt-1">Minimum : {{ commande.menu.minPersons }} personnes</p>
+        </div>
+
+        <div class="flex gap-4 pt-2">
+            <a href="{{ path('app_order_show', {'id': commande.id}) }}"
+               class="flex-1 text-center px-6 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-all">
+                Annuler
+            </a>
+            <button type="submit" class="flex-1 btn-primary">
+                Enregistrer les modifications
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

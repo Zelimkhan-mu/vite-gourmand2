@@ -106,8 +106,58 @@ class DashboardOrderController extends AbstractController
         $this->addFlash('success', 'Votre avis a bien été envoyé, merci !');
         return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
     }
+    
+    #[Route('/mes-commandes/{id}/modifier', name: 'app_order_edit', methods: ['GET'])]
+    public function edit(Commande $commande): Response
+    {
+        $user = $this->getUser();
 
+        if (!$user || $commande->getUser() !== $user) {
+            throw $this->createAccessDeniedException();
+        }
 
+        if ($commande->getStatutCommande() !== 'EN_ATTENTE') {
+            $this->addFlash('error', 'Cette commande ne peut plus être modifiée.');
+            return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
+        }
+
+        return $this->render('dashboard_user/order/edit.html.twig', [
+            'commande' => $commande,
+        ]);
+    }
+
+    #[Route('/mes-commandes/{id}/modifier', name: 'app_order_edit_save', methods: ['POST'])]
+    public function editSave(Commande $commande, Request $request, EntityManagerInterface $em): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user || $commande->getUser() !== $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($commande->getStatutCommande() !== 'EN_ATTENTE') {
+            $this->addFlash('error', 'Cette commande ne peut plus être modifiée.');
+            return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
+        }
+
+        if (!$this->isCsrfTokenValid('edit' . $commande->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token de sécurité invalide.');
+            return $this->redirectToRoute('app_order_edit', ['id' => $commande->getId()]);
+        }
+
+        $commande->setAdresseLivraison($request->request->get('address'));
+        $commande->setVilleLivraison($request->request->get('city'));
+        $commande->setCodePostalLivraison($request->request->get('zipcode'));
+        $commande->setDateLivraison(new \DateTime($request->request->get('delivery_date')));
+        $commande->setHeureLivraison(new \DateTime($request->request->get('delivery_time')));
+        $commande->setNumPersons((int) $request->request->get('people_count'));
+        $commande->calculatePricing();
+
+        $em->flush();
+
+        $this->addFlash('success', 'Votre commande a bien été modifiée.');
+        return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
+    }
 
     #[Route('/mes-commandes/{id}/annuler', name: 'app_order_cancel', methods: ['POST'])]
     public function cancel(Request $request, Commande $commande, EntityManagerInterface $em): Response
