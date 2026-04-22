@@ -80,6 +80,11 @@
 
             {% if commande.statutCommande == 'EN_ATTENTE' %}
                 <div class="flex justify-end pt-2">
+                    <a href="{{ path('app_order_edit', {'id': commande.id}) }}"
+                    class="px-6 py-3 border border-primary text-primary font-semibold rounded-xl hover:bg-red-50 hover:border-red-300 transition-all flex items-center gap-2">
+                        <span class="material-icons-outlined">edit</span>
+                        Modifier la commande
+                    </a>
                     <button @click="showModal = true" class="px-6 py-3 border border-red-200 text-red-600 font-semibold rounded-xl hover:bg-red-50 hover:border-red-300 transition-all flex items-center gap-2">
                         <span class="material-icons-outlined">cancel</span>
                         Annuler la commande
