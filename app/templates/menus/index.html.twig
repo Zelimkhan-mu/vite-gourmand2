@@ -27,10 +27,17 @@
                 </div>
 
                 <div class="mb-8">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 block">Prix Maximum</label>
-                    <div class="relative w-full">
-                        <input type="number" id="max-price-input" value="100" min="0" class="w-full border border-gray-200 rounded px-3 py-2 text-sm text-text-main focus:border-primary focus:ring-primary">
-                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">€</span>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 block">Fourchette de prix</label>
+                    <div class="flex items-center gap-2">
+                        <div class="relative flex-1">
+                            <input type="number" id="min-price-input" placeholder="0" min="0" class="w-full border border-gray-200 rounded px-3 py-2 text-sm text-text-main focus:border-primary focus:ring-primary">
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">€</span>
+                        </div>
+                        <span class="text-gray-400 text-sm">–</span>
+                        <div class="relative flex-1">
+                            <input type="number" id="max-price-input" placeholder="100" min="0" class="w-full border border-gray-200 rounded px-3 py-2 text-sm text-text-main focus:border-primary focus:ring-primary">
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">€</span>
+                        </div>
                     </div>
                 </div>
 
@@ -129,6 +136,7 @@
             const noResults = document.getElementById('no-results');
 
             const maxPriceInput = document.getElementById('max-price-input');
+            const minPriceInput = document.getElementById('min-price-input');
             const minPersonsInput = document.getElementById('min-persons');
             const themeCheckboxes = document.querySelectorAll('.theme-filter');
             const regimeCheckboxes = document.querySelectorAll('.regime-filter');
@@ -143,6 +151,9 @@
 
                 const maxPrice = maxPriceInput.value;
                 if (maxPrice) params.append('maxPrice', maxPrice);
+
+                const minPrice = minPriceInput.value;
+                if (minPrice) params.append('minPrice', minPrice);
 
                 const minPersons = minPersonsInput.value;
                 if (minPersons) params.append('minPersons', minPersons);
@@ -213,6 +224,7 @@
             }
 
             maxPriceInput.addEventListener('input', filterMenus);
+            minPriceInput.addEventListener('input', filterMenus);
             minPersonsInput.addEventListener('input', filterMenus);
             themeCheckboxes.forEach(cb => cb.addEventListener('change', filterMenus));
             regimeCheckboxes.forEach(cb => cb.addEventListener('change', filterMenus));
