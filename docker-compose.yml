@@ -6,6 +6,7 @@ services:
       - ./app:/var/www
     depends_on:
       - db
+      - mongo
 
   nginx:
     image: nginx:alpine
@@ -31,5 +32,14 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
+  mongo:
+    image: mongo:7
+    container_name: vite_gourmand_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
 volumes:
   db_data:
+  mongo_data:

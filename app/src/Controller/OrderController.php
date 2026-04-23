@@ -12,6 +12,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mime\Address;
+use App\Document\CommandeStats;
+use Doctrine\ODM\MongoDB\DocumentManager;
 
 class OrderController extends AbstractController
 {
@@ -76,7 +78,7 @@ class OrderController extends AbstractController
     }
 
     #[Route('/commande/creer', name: 'app_order_create', methods: ['POST'])]
-    public function create(Request $request, MenuRepository $menuRepo, EntityManagerInterface $em, MailerInterface $mailer): Response
+    public function create(Request $request, MenuRepository $menuRepo, EntityManagerInterface $em, MailerInterface $mailer, DocumentManager $dm): Response
     {
         $session = $request->getSession();
         $orderData = $session->get('order_data');
@@ -107,6 +109,17 @@ class OrderController extends AbstractController
 
         $em->persist($commande);
         $em->flush();
+
+        $stats = new CommandeStats();
+        $stats->setCommandeId($commande->getId());
+        $stats->setMenuId($menu->getId());
+        $stats->setMenuTitre($menu->getTitre());
+        $stats->setPrixTotal((float) $commande->getPrixTotal());
+        $stats->setNumPersons($commande->getNumPersons());
+        $stats->setCreatedAt(new \DateTime());
+
+        $dm->persist($stats);
+        $dm->flush();
 
         $session->remove('order_data');
 
