@@ -14,6 +14,8 @@ use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mime\Address;
 use App\Document\CommandeStats;
 use Doctrine\ODM\MongoDB\DocumentManager;
+use App\Service\DistanceService;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class OrderController extends AbstractController
 {
@@ -61,6 +63,12 @@ class OrderController extends AbstractController
         $tempCommande = new Commande();
         $tempCommande->setMenu($menu);
         $tempCommande->setNumPersons($count);
+        $distance = $distanceService->getDistanceFromBordeaux(
+                $orderData['address'],
+                $orderData['city'],
+                $orderData['zipcode']
+            );
+        $tempCommande->setDistanceLivraisonKm($distance !== null ? (string) $distance : null);
         $tempCommande->calculatePricing();
 
         $total = (float) $tempCommande->getPrixTotal();
@@ -78,7 +86,7 @@ class OrderController extends AbstractController
     }
 
     #[Route('/commande/creer', name: 'app_order_create', methods: ['POST'])]
-    public function create(Request $request, MenuRepository $menuRepo, EntityManagerInterface $em, MailerInterface $mailer, DocumentManager $dm): Response
+    public function create(Request $request, MenuRepository $menuRepo, EntityManagerInterface $em, MailerInterface $mailer, DocumentManager $dm, DistanceService $distanceService): Response
     {
         $session = $request->getSession();
         $orderData = $session->get('order_data');
@@ -101,7 +109,12 @@ class OrderController extends AbstractController
         $commande->setCodePostalLivraison($orderData['zipcode']);
         $commande->setDateLivraison(new \DateTime($orderData['delivery_date']));
         $commande->setHeureLivraison(new \DateTime($orderData['delivery_time']));
-
+        $distance = $distanceService->getDistanceFromBordeaux(
+            $orderData['address'],
+            $orderData['city'],
+            $orderData['zipcode']
+        );
+        $commande->setDistanceLivraisonKm($distance !== null ? (string) $distance : null);
         $commande->calculatePricing();
 
         $commande->setStatutCommande('EN_ATTENTE');
@@ -141,4 +154,22 @@ class OrderController extends AbstractController
             'commande' => $commande
         ]);
     }
+
+    #[Route('/commande/frais-livraison', name: 'app_order_delivery_fee', methods: ['GET'])]
+    public function deliveryFee(Request $request, DistanceService $distanceService): JsonResponse
+    {
+        $address = $request->query->get('address', '');
+        $city = $request->query->get('city', '');
+        $zipcode = $request->query->get('zipcode', '');
+
+        if (!$address || !$city || !$zipcode) {
+            return new JsonResponse(['fee' => 5.00]);
+        }
+
+        $distance = $distanceService->getDistanceFromBordeaux($address, $city, $zipcode);
+        $fee = $distance !== null ? round(5.00 + ($distance * 0.59), 2) : 5.00;
+
+        return new JsonResponse(['fee' => $fee]);
+    }
+
 }

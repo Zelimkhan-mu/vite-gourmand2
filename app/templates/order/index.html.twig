@@ -214,6 +214,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submit-btn');
     const discountLine = document.getElementById('discount-line');
     const priceDiscountDisplay = document.getElementById('price-discount');
+    let deliveryFee = 5.00;
+
+    function fetchDeliveryFee() {
+        const address = document.getElementById('delivery-address').value;
+        const city = document.getElementById('delivery-city').value;
+        const zipcode = document.getElementById('delivery-zipcode').value;
+
+        if (!address || !city || !zipcode) return;
+
+        fetch(`/commande/frais-livraison?address=${encodeURIComponent(address)}&city=${encodeURIComponent(city)}&zipcode=${encodeURIComponent(zipcode)}`)
+            .then(response => response.json())
+            .then(data => {
+                deliveryFee = data.fee;
+                updatePrices();
+            });
+    }
 
     trigger.addEventListener('click', () => {
         content.classList.toggle('hidden');
@@ -254,7 +270,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const price = parseFloat(menuPrice.value) || 0;
         const count = parseInt(peopleInput.value) || 0;
         const minCount = parseInt(peopleInput.min) || 1;
-        const deliveryFee = 5.00;
 
         if (price === 0) {
             priceMenuDisplay.textContent = "-- €";
@@ -293,6 +308,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (menuId.value) {
         updatePrices();
     }
+
+    document.getElementById('delivery-address').addEventListener('blur', fetchDeliveryFee);
+    document.getElementById('delivery-city').addEventListener('blur', fetchDeliveryFee);
+    document.getElementById('delivery-zipcode').addEventListener('blur', fetchDeliveryFee);
 });
 </script>
 {% endblock %}
