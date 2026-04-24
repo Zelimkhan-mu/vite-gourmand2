@@ -363,7 +363,8 @@ class Commande
         }
 
         $this->prixMenu = (string) $subtotal;
-        $this->fraisLivraison = "5.00";
+        $distanceKm = (float) ($this->distanceLivraisonKm ?? 0);
+        $this->fraisLivraison = (string) round(5.00 + ($distanceKm * 0.59), 2);
         $this->prixTotal = (string) ($subtotal - (float) $this->discount + (float) $this->fraisLivraison);
     }
 }

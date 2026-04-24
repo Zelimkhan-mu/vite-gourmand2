@@ -10,6 +10,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\StatutCommandeHistorique;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\Review;
+use App\Repository\ReviewRepository;
 
 class DashboardOrderController extends AbstractController
 {
@@ -42,9 +44,9 @@ class DashboardOrderController extends AbstractController
             'currentFilter' => $status ?: 'Toutes'
         ]);
     }
-
+    
     #[Route('/mes-commandes/{id}', name: 'app_order_show', methods: ['GET'])]
-    public function show(Commande $commande): Response
+    public function show(Commande $commande, ReviewRepository $reviewRepo): Response
     {
         $user = $this->getUser();
 
@@ -57,10 +59,104 @@ class DashboardOrderController extends AbstractController
             return $b->getCreatedAt() <=> $a->getCreatedAt();
         });
 
+        $review = $reviewRepo->findOneBy(['commande' => $commande]);
+
         return $this->render('dashboard_user/order/popup.html.twig', [
             'commande' => $commande,
-            'historique' => $historique
+            'historique' => $historique,
+            'review' => $review
         ]);
+    }
+
+    #[Route('/mes-commandes/{id}/avis', name: 'app_order_review', methods: ['POST'])]
+    public function review(Commande $commande, Request $request, EntityManagerInterface $em, ReviewRepository $reviewRepo): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user || $commande->getUser() !== $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($commande->getStatutCommande() !== 'TERMINEE') {
+            throw $this->createAccessDeniedException("Cette commande n'est pas encore terminée.");
+        }
+
+        if ($reviewRepo->findOneBy(['commande' => $commande])) {
+            $this->addFlash('warning', 'Vous avez déjà donné votre avis pour cette commande.');
+            return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
+        }
+
+        $rating = (int) $request->request->get('rating');
+        $commentaire = trim($request->request->get('commentaire', ''));
+
+        if ($rating < 1 || $rating > 5 || $commentaire === '') {
+            $this->addFlash('error', 'Veuillez remplir tous les champs.');
+            return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
+        }
+
+        $review = new Review();
+        $review->setCommande($commande);
+        $review->setUser($user);
+        $review->setRating($rating);
+        $review->setCommentaire($commentaire);
+
+        $em->persist($review);
+        $em->flush();
+
+        $this->addFlash('success', 'Votre avis a bien été envoyé, merci !');
+        return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
+    }
+    
+    #[Route('/mes-commandes/{id}/modifier', name: 'app_order_edit', methods: ['GET'])]
+    public function edit(Commande $commande): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user || $commande->getUser() !== $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($commande->getStatutCommande() !== 'EN_ATTENTE') {
+            $this->addFlash('error', 'Cette commande ne peut plus être modifiée.');
+            return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
+        }
+
+        return $this->render('dashboard_user/order/edit.html.twig', [
+            'commande' => $commande,
+        ]);
+    }
+
+    #[Route('/mes-commandes/{id}/modifier', name: 'app_order_edit_save', methods: ['POST'])]
+    public function editSave(Commande $commande, Request $request, EntityManagerInterface $em): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user || $commande->getUser() !== $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($commande->getStatutCommande() !== 'EN_ATTENTE') {
+            $this->addFlash('error', 'Cette commande ne peut plus être modifiée.');
+            return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
+        }
+
+        if (!$this->isCsrfTokenValid('edit' . $commande->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token de sécurité invalide.');
+            return $this->redirectToRoute('app_order_edit', ['id' => $commande->getId()]);
+        }
+
+        $commande->setAdresseLivraison($request->request->get('address'));
+        $commande->setVilleLivraison($request->request->get('city'));
+        $commande->setCodePostalLivraison($request->request->get('zipcode'));
+        $commande->setDateLivraison(new \DateTime($request->request->get('delivery_date')));
+        $commande->setHeureLivraison(new \DateTime($request->request->get('delivery_time')));
+        $commande->setNumPersons((int) $request->request->get('people_count'));
+        $commande->calculatePricing();
+
+        $em->flush();
+
+        $this->addFlash('success', 'Votre commande a bien été modifiée.');
+        return $this->redirectToRoute('app_order_show', ['id' => $commande->getId()]);
     }
 
     #[Route('/mes-commandes/{id}/annuler', name: 'app_order_cancel', methods: ['POST'])]

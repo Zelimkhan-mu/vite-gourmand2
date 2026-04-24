@@ -20,6 +20,7 @@ security:
             security: false
         main:
             lazy: true
+            user_checker: App\Security\UserChecker
             provider: app_user_provider
             form_login:
                 login_path: app_login
@@ -38,7 +39,7 @@ security:
     access_control:
         - { path: ^/commande, roles: ROLE_USER }
         - { path: ^/dashboard, roles: ROLE_USER }
-        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/admin, roles: ROLE_EMPLOYE }
 
 when@test:
     security:

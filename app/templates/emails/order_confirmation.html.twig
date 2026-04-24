@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<body>
+    <h1>Confirmation de votre commande</h1>
+    <p>Bonjour {{ commande.user.firstName }},</p>
+    <p>Nous avons bien reçu votre commande et elle est en cours de traitement.</p>
+
+    <h2>Récapitulatif</h2>
+    <ul>
+        <li><strong>Menu :</strong> {{ commande.menu.titre }}</li>
+        <li><strong>Nombre de personnes :</strong> {{ commande.numPersons }}</li>
+        <li><strong>Date de livraison :</strong> {{ commande.dateLivraison|date('d/m/Y') }}</li>
+        <li><strong>Heure :</strong> {{ commande.heureLivraison|date('H:i') }}</li>
+        <li><strong>Adresse :</strong> {{ commande.adresseLivraison }}, {{ commande.codePostalLivraison }} {{ commande.villeLivraison }}</li>
+    </ul>
+
+    <h2>Prix</h2>
+    <ul>
+        <li>Prix du menu : {{ commande.prixMenu }} €</li>
+        {% if commande.discount > 0 %}
+        <li>Réduction : -{{ commande.discount }} €</li>
+        {% endif %}
+        <li>Frais de livraison : {{ commande.fraisLivraison }} €</li>
+        <li><strong>Total : {{ commande.prixTotal }} €</strong></li>
+    </ul>
+
+    <p>Merci pour votre confiance.<br>L'équipe Vite &amp; Gourmand</p>
+</body>
+</html>

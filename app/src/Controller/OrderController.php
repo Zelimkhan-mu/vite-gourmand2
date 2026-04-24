@@ -4,11 +4,14 @@ namespace App\Controller;
 
 use App\Entity\Commande;
 use App\Repository\MenuRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Service\CommandeService;
+use App\Service\DistanceService;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Service\MailerService;
 
 class OrderController extends AbstractController
 {
@@ -37,7 +40,7 @@ class OrderController extends AbstractController
     }
 
     #[Route('/commande/recapitulatif', name: 'app_order_recap', methods: ['GET'])]
-    public function recap(Request $request, MenuRepository $menuRepo): Response
+    public function recap(Request $request, MenuRepository $menuRepo, DistanceService $distanceService): Response
     {
         $session = $request->getSession();
         $orderData = $session->get('order_data');
@@ -56,6 +59,12 @@ class OrderController extends AbstractController
         $tempCommande = new Commande();
         $tempCommande->setMenu($menu);
         $tempCommande->setNumPersons($count);
+        $distance = $distanceService->getDistanceFromBordeaux(
+                $orderData['address'],
+                $orderData['city'],
+                $orderData['zipcode']
+            );
+        $tempCommande->setDistanceLivraisonKm($distance !== null ? (string) $distance : null);
         $tempCommande->calculatePricing();
 
         $total = (float) $tempCommande->getPrixTotal();
@@ -73,7 +82,7 @@ class OrderController extends AbstractController
     }
 
     #[Route('/commande/creer', name: 'app_order_create', methods: ['POST'])]
-    public function create(Request $request, MenuRepository $menuRepo, EntityManagerInterface $em): Response
+    public function create(Request $request, MenuRepository $menuRepo, MailerService $mailerService, CommandeService $commandeService): Response
     {
         $session = $request->getSession();
         $orderData = $session->get('order_data');
@@ -87,25 +96,16 @@ class OrderController extends AbstractController
             return $this->redirectToRoute('app_order');
         }
 
-        $commande = new Commande();
-        $commande->setUser($this->getUser());
-        $commande->setMenu($menu);
-        $commande->setNumPersons((int) $orderData['people_count']);
-        $commande->setAdresseLivraison($orderData['address']);
-        $commande->setVilleLivraison($orderData['city']);
-        $commande->setCodePostalLivraison($orderData['zipcode']);
-        $commande->setDateLivraison(new \DateTime($orderData['delivery_date']));
-        $commande->setHeureLivraison(new \DateTime($orderData['delivery_time']));
+        if ($menu->getStock() <= 0) {
+            $this->addFlash('error', 'Désolé, ce menu est actuellement en rupture de stock.');
+            return $this->redirectToRoute('app_order');
+        }
 
-        $commande->calculatePricing();
-
-        $commande->setStatutCommande('EN_ATTENTE');
-        $commande->setPretMateriel(false);
-
-        $em->persist($commande);
-        $em->flush();
+        $commande = $commandeService->createFromOrderData($orderData, $menu, $this->getUser());
 
         $session->remove('order_data');
+
+        $mailerService->sendOrderConfirmation($commande);
 
         return $this->redirectToRoute('app_order_confirmation', ['id' => $commande->getId()]);
     }
@@ -113,8 +113,30 @@ class OrderController extends AbstractController
     #[Route('/commande/confirmation/{id}', name: 'app_order_confirmation', methods: ['GET'])]
     public function confirmation(Commande $commande): Response
     {
+        if ($this->getUser() !== $commande->getUser()) {
+            throw $this->createAccessDeniedException("Cette commande ne vous appartient pas.");
+        }
+
         return $this->render('order/confirmation.html.twig', [
             'commande' => $commande
         ]);
     }
+
+    #[Route('/commande/frais-livraison', name: 'app_order_delivery_fee', methods: ['GET'])]
+    public function deliveryFee(Request $request, DistanceService $distanceService): JsonResponse
+    {
+        $address = $request->query->get('address', '');
+        $city = $request->query->get('city', '');
+        $zipcode = $request->query->get('zipcode', '');
+
+        if (!$address || !$city || !$zipcode) {
+            return new JsonResponse(['fee' => 5.00]);
+        }
+
+        $distance = $distanceService->getDistanceFromBordeaux($address, $city, $zipcode);
+        $fee = $distance !== null ? round(5.00 + ($distance * 0.59), 2) : 5.00;
+
+        return new JsonResponse(['fee' => $fee]);
+    }
+
 }
