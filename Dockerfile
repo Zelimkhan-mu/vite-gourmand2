@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     && pecl install mongodb \
     && docker-php-ext-enable mongodb \
     && a2enmod rewrite \
+    && a2dismod mpm_event \
     && apt-get clean
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -25,6 +26,7 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-interaction --optimize-autoloader
 
 RUN sed -i 's|/var/www/html|/var/www/public|g' /etc/apache2/sites-available/000-default.conf \
-    && printf '<Directory /var/www/public>\n    AllowOverride All\n</Directory>\n' >> /etc/apache2/apache2.conf
+    && sed -i '/<\/VirtualHost>/i\\\tFallbackResource /index.php' /etc/apache2/sites-available/000-default.conf \
+    && printf '<Directory /var/www/public>\n\tAllowOverride All\n</Directory>\n' >> /etc/apache2/apache2.conf
 
 RUN chown -R www-data:www-data /var/www
