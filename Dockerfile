@@ -26,7 +26,6 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-interaction --optimize-autoloader
 
 RUN sed -i 's|/var/www/html|/var/www/public|g' /etc/apache2/sites-available/000-default.conf \
-    && sed -i '/<\/VirtualHost>/i\\\tFallbackResource /index.php' /etc/apache2/sites-available/000-default.conf \
     && printf '<Directory /var/www/public>\n\tAllowOverride All\n</Directory>\n' >> /etc/apache2/apache2.conf
 
 RUN chown -R www-data:www-data /var/www
