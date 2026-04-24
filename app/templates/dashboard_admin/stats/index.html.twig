@@ -10,7 +10,7 @@
         <select name="menu" class="pl-4 pr-10 py-2 border border-gray-200 rounded-lg text-sm focus:ring-primary focus:border-primary bg-white text-gray-600">
             <option value="">Tous les menus</option>
             {% for menu in menus %}
-                <option value="{{ menu.id }}" {{ currentMenu == menu.id|string ? 'selected' : '' }}>
+                <option value="{{ menu.id }}" {{ currentMenu == menu.id ? 'selected' : '' }}>
                     {{ menu.titre }}
                 </option>
             {% endfor %}
