@@ -4,18 +4,14 @@ namespace App\Controller;
 
 use App\Entity\Commande;
 use App\Repository\MenuRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\Mime\Address;
-use App\Document\CommandeStats;
-use Doctrine\ODM\MongoDB\DocumentManager;
+use App\Service\CommandeService;
 use App\Service\DistanceService;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Service\MailerService;
 
 class OrderController extends AbstractController
 {
@@ -44,7 +40,7 @@ class OrderController extends AbstractController
     }
 
     #[Route('/commande/recapitulatif', name: 'app_order_recap', methods: ['GET'])]
-    public function recap(Request $request, MenuRepository $menuRepo): Response
+    public function recap(Request $request, MenuRepository $menuRepo, DistanceService $distanceService): Response
     {
         $session = $request->getSession();
         $orderData = $session->get('order_data');
@@ -86,7 +82,7 @@ class OrderController extends AbstractController
     }
 
     #[Route('/commande/creer', name: 'app_order_create', methods: ['POST'])]
-    public function create(Request $request, MenuRepository $menuRepo, EntityManagerInterface $em, MailerInterface $mailer, DocumentManager $dm, DistanceService $distanceService): Response
+    public function create(Request $request, MenuRepository $menuRepo, MailerService $mailerService, CommandeService $commandeService): Response
     {
         $session = $request->getSession();
         $orderData = $session->get('order_data');
@@ -100,49 +96,16 @@ class OrderController extends AbstractController
             return $this->redirectToRoute('app_order');
         }
 
-        $commande = new Commande();
-        $commande->setUser($this->getUser());
-        $commande->setMenu($menu);
-        $commande->setNumPersons((int) $orderData['people_count']);
-        $commande->setAdresseLivraison($orderData['address']);
-        $commande->setVilleLivraison($orderData['city']);
-        $commande->setCodePostalLivraison($orderData['zipcode']);
-        $commande->setDateLivraison(new \DateTime($orderData['delivery_date']));
-        $commande->setHeureLivraison(new \DateTime($orderData['delivery_time']));
-        $distance = $distanceService->getDistanceFromBordeaux(
-            $orderData['address'],
-            $orderData['city'],
-            $orderData['zipcode']
-        );
-        $commande->setDistanceLivraisonKm($distance !== null ? (string) $distance : null);
-        $commande->calculatePricing();
+        if ($menu->getStock() <= 0) {
+            $this->addFlash('error', 'Désolé, ce menu est actuellement en rupture de stock.');
+            return $this->redirectToRoute('app_order');
+        }
 
-        $commande->setStatutCommande('EN_ATTENTE');
-        $commande->setPretMateriel(false);
-
-        $em->persist($commande);
-        $em->flush();
-
-        $stats = new CommandeStats();
-        $stats->setCommandeId($commande->getId());
-        $stats->setMenuId($menu->getId());
-        $stats->setMenuTitre($menu->getTitre());
-        $stats->setPrixTotal((float) $commande->getPrixTotal());
-        $stats->setNumPersons($commande->getNumPersons());
-        $stats->setCreatedAt(new \DateTime());
-
-        $dm->persist($stats);
-        $dm->flush();
+        $commande = $commandeService->createFromOrderData($orderData, $menu, $this->getUser());
 
         $session->remove('order_data');
 
-        $email = (new TemplatedEmail())
-            ->from(new Address('no-reply@vite-et-gourmand.fr'))
-            ->to($this->getUser()->getEmail())
-            ->subject('Confirmation de votre commande')
-            ->htmlTemplate('emails/order_confirmation.html.twig', ['commande' => $commande]);
-
-        $mailer->send($email);
+        $mailerService->sendOrderConfirmation($commande);
 
         return $this->redirectToRoute('app_order_confirmation', ['id' => $commande->getId()]);
     }
@@ -150,6 +113,10 @@ class OrderController extends AbstractController
     #[Route('/commande/confirmation/{id}', name: 'app_order_confirmation', methods: ['GET'])]
     public function confirmation(Commande $commande): Response
     {
+        if ($this->getUser() !== $commande->getUser()) {
+            throw $this->createAccessDeniedException("Cette commande ne vous appartient pas.");
+        }
+
         return $this->render('order/confirmation.html.twig', [
             'commande' => $commande
         ]);
