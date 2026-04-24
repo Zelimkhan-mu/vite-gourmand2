@@ -24,8 +24,7 @@ COPY . .
 ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-interaction --optimize-autoloader
 
-RUN chown -R www-data:www-data /var/www
+RUN sed -i 's|/var/www/html|/var/www/public|g' /etc/apache2/sites-available/000-default.conf \
+    && printf '<Directory /var/www/public>\n    AllowOverride All\n</Directory>\n' >> /etc/apache2/apache2.conf
 
-ENV APACHE_DOCUMENT_ROOT /var/www/public
-RUN sed -i 's|/var/www/html|${APACHE_DOCUMENT_ROOT}|g' /etc/apache2/sites-available/000-default.conf \
-    && sed -i 's|/var/www/html|${APACHE_DOCUMENT_ROOT}|g' /etc/apache2/apache2.conf
+RUN chown -R www-data:www-data /var/www
