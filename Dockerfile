@@ -20,6 +20,6 @@ WORKDIR /var/www
 
 COPY . .
 
-RUN composer install --no-interaction --optimize-autoloader
+RUN composer install --no-interaction --optimize-autoloader --no-scripts
 
 RUN chown -R www-data:www-data /var/www
