@@ -150,27 +150,28 @@
 
 
             function buildUrl() {
-                const params = new URLSearchParams();
+                const parts = [];
 
                 const maxPrice = maxPriceInput.value;
-                if (maxPrice) params.append('maxPrice', maxPrice);
+                if (maxPrice) parts.push('maxPrice=' + encodeURIComponent(maxPrice));
 
                 const minPrice = minPriceInput.value;
-                if (minPrice) params.append('minPrice', minPrice);
+                if (minPrice) parts.push('minPrice=' + encodeURIComponent(minPrice));
 
                 const minPersons = minPersonsInput.value;
-                if (minPersons) params.append('minPersons', minPersons);
+                if (minPersons) parts.push('minPersons=' + encodeURIComponent(minPersons));
 
                 themeCheckboxes.forEach(cb => {
-                    if (cb.checked) params.append('themes[]', cb.value);
+                    if (cb.checked) parts.push('theme[]=' + encodeURIComponent(cb.value));
                 });
 
                 regimeCheckboxes.forEach(cb => {
-                    if (cb.checked) params.append('regimes[]', cb.value);
+                    if (cb.checked) parts.push('regime[]=' + encodeURIComponent(cb.value));
                 });
 
-                return '/menus/filter?' + params.toString();
+                return '/menus/filter?' + parts.join('&');
             }
+
 
             function renderMenus(menus) {
                 const existingItems = menuGrid.querySelectorAll('.menu-item');
