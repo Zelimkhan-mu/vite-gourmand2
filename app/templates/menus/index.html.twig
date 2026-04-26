@@ -141,10 +141,13 @@
             const themeCheckboxes = document.querySelectorAll('.theme-filter');
             const regimeCheckboxes = document.querySelectorAll('.regime-filter');
 
-            filterBtn.addEventListener('click', () => {
-                filterContent.classList.toggle('hidden');
-                filterIcon.textContent = filterContent.classList.contains('hidden') ? 'expand_more' : 'expand_less';
-            });
+            if (filterBtn) {
+                filterBtn.addEventListener('click', () => {
+                    filterContent.classList.toggle('hidden');
+                    filterIcon.textContent = filterContent.classList.contains('hidden') ? 'expand_more' : 'expand_less';
+                });
+            }
+
 
             function buildUrl() {
                 const params = new URLSearchParams();
