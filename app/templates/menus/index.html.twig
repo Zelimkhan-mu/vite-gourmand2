@@ -162,11 +162,11 @@
                 if (minPersons) params.append('minPersons', minPersons);
 
                 themeCheckboxes.forEach(cb => {
-                    if (cb.checked) params.append('theme', cb.value);
+                    if (cb.checked) params.append('themes[]', cb.value);
                 });
 
                 regimeCheckboxes.forEach(cb => {
-                    if (cb.checked) params.append('regime', cb.value);
+                    if (cb.checked) params.append('regimes[]', cb.value);
                 });
 
                 return '/menus/filter?' + params.toString();
